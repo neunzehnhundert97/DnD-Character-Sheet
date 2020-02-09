@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title></title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="bootstrap.min.css">
+    <style>
+        .not-selectable {
+            cursor: default;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #general-stats {
+            cursor: pointer;
+        }
+
+        #stat-table {
+            margin-bottom: 0;
+        }
+
+        #stat-table td {
+            text-align: center;
+        }
+
+        #stat-table .row-stat:hover {
+            animation-name: greenish;
+            animation-duration: 0.5s;
+            animation-fill-mode: forwards;
+        }
+
+        #stat-table table td {
+            padding-top: 0;
+            padding-bottom: 0;
+            font-size: 80%;
+        }
+
+        #ability-table {
+            margin-bottom: 0;
+        }
+
+        #ability-table td {
+            text-align: center;
+            padding: 0.25rem;
+        }
+
+        #ability-table tr:hover {
+            animation-name: greenish;
+            animation-duration: 0.5s;
+            animation-fill-mode: forwards;
+        }
+
+        @keyframes greenish {
+            from {
+                background: white;
+            }
+
+            to {
+                background: #1e7e3480;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+    <!-- General stats like name, class, etc -->
+    <span id="general-stats" class="navbar-brand not-selectable"></span>
+    <ul class="navbar-nav">
+        <li class="nav-item active">
+            <a class="nav-link" href="#">General</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#">Fight</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#">Shopping</a>
+        </li>
+    </ul>
+
+    <!-- Buttons --->
+    <div class="navbar-nav ml-auto">
+        <button id="button-import" class="nav-item btn btn-secondary mx-1" type="button">
+            Import
+        </button>
+        <button id="button-export" class="nav-item btn btn-primary mx-1" type="button">
+            Export
+        </button>
+        <button id="button-save" class="nav-item btn btn-success mx-1" type="button">
+            Save
+        </button>
+    </div>
+</nav>
+
+<div id="slider-common" class="container-fluid">
+    <div class="row">
+        <div class="col-sm-2">
+
+            <!-- Table with attributes -->
+            <table id="stat-table" class="table not-selectable">
+                <tr class="row-stat">
+                    <td>STR</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr class="row-stat">
+                    <td>DEX</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr class="row-stat">
+                    <td>CON</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr class="row-stat">
+                    <td>INT</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr class="row-stat">
+                    <td>WIS</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr class="row-stat">
+                    <td>CHA</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </table>
+
+        </div>
+        <div class="col-sm-2">
+
+            <!-- Table with abilities and proficiencies -->
+            <table id="ability-table" class="table not-selectable"></table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div id="modals">
+
+    <!-- Modal for editing attributes -->
+    <div class="modal fade" id="stats-modal">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title"></h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body" style="text-align: center;">
+                    <select class="form-control" style="width: 100%; text-align: center">
+                        <option>0 (-5)</option>
+                        <option>1 (-5)</option>
+                        <option>2 (-4)</option>
+                        <option>3 (-4)</option>
+                        <option>4 (-3)</option>
+                        <option>5 (-3)</option>
+                        <option>6 (-2)</option>
+                        <option>7 (-2)</option>
+                        <option>8 (-1)</option>
+                        <option>9 (-1)</option>
+                        <option>10 (0)</option>
+                        <option>11 (0)</option>
+                        <option>12 (+1)</option>
+                        <option>13 (+1)</option>
+                        <option>14 (+2)</option>
+                        <option>15 (+2)</option>
+                        <option>16 (+3)</option>
+                        <option>17 (+3)</option>
+                        <option>18 (+4)</option>
+                        <option>19 (+4)</option>
+                        <option>20 (+5)</option>
+                        <option>21 (+5)</option>
+                        <option>22 (+6)</option>
+                    </select>
+                    <span style="text-align: center"></span>
+                    <div class="custom-control custom-switch form-control">
+                        <input id="switch-is-savingthrow" class="custom-control-input" type="checkbox">
+                        <label for="switch-is-savingthrow" class="custom-control-label">Saving Throw</label>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for importing information -->
+    <div class="modal fade" id="import-modal">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title">Import String</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body" style="text-align: center;">
+                    <textarea id="import-string" class="form-control"></textarea>
+                    <button id="import-string-button" class="btn btn-success m-2">Importieren</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for exporting information -->
+    <div class="modal fade" id="export-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title">Export String</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body" style="text-align: center;">
+                    <textarea id="export-string" class="form-control"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for editing general information -->
+    <div class="modal fade" id="general-modal">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title">General information</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body" style="text-align: center;">
+                    <input type="text" placeholder="Name" class="form-control" name="name">
+                    <table>
+                        <tr>
+                            <td><select class="form-control" name="level">
+                                <option>1</option>
+                                <option>2</option>
+                                <option>3</option>
+                                <option>4</option>
+                                <option>5</option>
+                                <option>6</option>
+                                <option>7</option>
+                                <option>8</option>
+                                <option>9</option>
+                                <option>10</option>
+                                <option>11</option>
+                                <option>12</option>
+                                <option>13</option>
+                                <option>14</option>
+                                <option>15</option>
+                                <option>16</option>
+                                <option>17</option>
+                                <option>18</option>
+                                <option>19</option>
+                                <option>20</option>
+                            </select></td>
+                            <td><input class="form-control" name="experience" type="number"></td>
+                        </tr>
+                    </table>
+                    <input type="text" placeholder="Class" class="form-control" name="class">
+                    <input type="text" placeholder="Race" class="form-control" name="race">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for editing general information -->
+    <div class="modal fade" id="ability-modal">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title"></h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body" style="text-align: center;">
+                    <div class="custom-control custom-switch form-control">
+                        <input id="switch-is-proficient" class="custom-control-input" type="checkbox">
+                        <label for="switch-is-proficient" class="custom-control-label">Proficient</label>
+                    </div>
+                    <div class="custom-control custom-switch form-control">
+                        <input id="switch-is-expertise" class="custom-control-input" type="checkbox">
+                        <label for="switch-is-expertise" class="custom-control-label">Expertise</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="information-container" class="hidden"></div>
+
+<script>
+
+    let abilityMapping = {
+        "Acrobatics": "dex",
+        "Animal Handling": "wis",
+        "Arcana": "int",
+        "Athletics": "str",
+        "Deception": "cha",
+        "History": "int",
+        "Insight": "wis",
+        "Intimidation": "cha",
+        "Investigation": "int",
+        "Medicine": "wis",
+        "Nature": "int",
+        "Perception": "wis",
+        "Performance": "cha",
+        "Persuasion": "cha",
+        "Religion": "int",
+        "Sleight of Hand": "dex",
+        "Stealth": "dex",
+        "Survival": "wis",
+    };
+
+    let levelMapping = {
+        1: [0, 2],
+        2: [300, 2],
+        3: [900, 2],
+        4: [2700, 2],
+        5: [6500, 3],
+        6: [14000, 3],
+        7: [23000, 3],
+        8: [34000, 3],
+        9: [48000, 4],
+        10: [64000, 4],
+        11: [85000, 4],
+        12: [100000, 4],
+        13: [120000, 5],
+        14: [140000, 5],
+        15: [165000, 5],
+        16: [195000, 5],
+        17: [225000, 6],
+        18: [265000, 6],
+        19: [305000, 6],
+        20: [355000, 6],
+    };
+
+    // Define default information
+    let information;
+
+    let embeddedInfo = $("#information-container").text();
+    if (embeddedInfo.length > 10)
+        information = JSON.parse(embeddedInfo);
+    else
+        information = {
+            general: {name: "Name", level: 1, class: "Fighter", race: "Cyber elf", experience: 0, proficiency: 2},
+            stats: {str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10},
+            proficiency: {"Acrobatics": true},
+            expertise: {}
+        };
+
+    // Apply the default information
+    loadInformation();
+
+    // Define ready function
+    $(document).ready(function ()
+    {
+        // Define click handler for attributes
+        $("#stat-table .row-stat").click(function (e)
+        {
+            // Get clicked row and values
+            let target = $(e.currentTarget);
+            let attribute = target.children().eq(0).text();
+            let value = target.children().eq(1).text();
+            let modifier = statToModifier(value);
+
+            if (modifier > 0)
+                modifier = "+" + modifier;
+
+            // Set modal title
+            $("#stats-modal .modal-title").text("Setze " + attribute);
+
+            // Set new change handler for the select element, remove old ones, and set it to the current value
+            $("#stats-modal select")
+                .off()
+                .val(value + " (" + modifier + ")")
+                .change(function ()
+                {
+                    // Get selected values
+                    let values = $(this).val().split(" (");
+
+                    // Write values into table and information object
+                    information.stats[attribute.toLowerCase()] = values[0];
+                    updateAbilities();
+                    target.children().eq(1).text(values[0]);
+                    target.children().eq(2).text(values[1].replace(")", ""));
+                    $("#stats-modal").modal("hide");
+                });
+            $("#stats-modal").modal();
+        });
+
+        // Click handler for import button
+        $("#button-import").click(function ()
+        {
+            $("#import-modal").modal();
+        });
+
+        // Click handler for the import functionality
+        $("#import-string-button").click(function ()
+        {
+            let input = $("#import-string").val();
+            let info;
+
+            try
+            {
+                info = JSON.parse(input);
+            } catch (e)
+            {
+                alert("Input malformed!");
+                return;
+            }
+
+            $("#import-modal").modal("hide");
+            information = info;
+            loadInformation();
+        });
+
+        $("#button-export").click(function ()
+        {
+            // Set export string
+            $("#export-string").text($("#information-container").text());
+
+            // Display modal
+            $("#export-modal").modal();
+
+            // Select all text after short delay
+            setTimeout('$("#export-string")[0].focus();$("#export-string")[0].select();', 200);
+
+        });
+
+        $("#button-save").click(function ()
+        {
+            // Generate file content out of the document
+            let content = "data:plain/attachment," + encodeURIComponent(document.documentElement.innerHTML);
+
+            // Create a element with download
+            let element = document.createElement("a");
+            element.href = content;
+            element.download = information.general.name + " - Sheet.html";
+            element.style.display = "none";
+
+            // Insert it, click it, and remove it
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        });
+
+        // Set click handler for general information
+        $("#general-stats").click(function ()
+        {
+            $("#general-modal input[name=name]").val(information.general.name);
+            $("#general-modal select[name=level]").val(information.general.level);
+            $("#general-modal input[name=experience]").val(information.general.experience);
+            $("#general-modal input[name=class]").val(information.general.class);
+            $("#general-modal input[name=race]").val(information.general.race);
+            $("#general-modal").modal();
+        });
+
+        $("#general-modal input[name=name]").change(function ()
+        {
+            information.general.name = $(this).val();
+            document.title = "D&D Sheet - " + information.general.name;
+            $("#general-stats").text(`${information.general.name}, ${information.general.level} Level ${information.general.class} (${information.general.race})`);
+        });
+
+        $("#general-modal select[name=level]").change(function ()
+        {
+            let level = parseInt($(this).val());
+
+            // Update information object
+            information.general.level = level;
+            information.general.experience = levelMapping[level][0];
+
+            // Update shown information
+            $("#general-modal input[name=experience]").val(levelMapping[level][0]);
+            $("#general-stats").text(`${information.general.name}, ${information.general.level} Level ${information.general.class} (${information.general.race})`);
+            updateAbilities();
+        });
+
+        $("#general-modal input[name=experience]").change(function ()
+        {
+            let xp = parseInt($(this).val());
+
+            let level = 1;
+
+            for (; level < 20; ++level)
+                if (levelMapping[level][0] > xp)
+                    break;
+
+            information.general.experience = xp;
+            information.general.level = level;
+
+            // Update shown information
+            $("#general-modal select[name=level]").val(level);
+            $("#general-stats").text(`${information.general.name}, ${information.general.level} Level ${information.general.class} (${information.general.race})`);
+            updateAbilities();
+        });
+
+        $("#general-modal input[name=class]").change(function ()
+        {
+            information.general.class = $(this).val();
+            $("#general-stats").text(`${information.general.name}, ${information.general.level} Level ${information.general.class} (${information.general.race})`);
+        });
+
+        $("#general-modal input[name=race]").change(function ()
+        {
+            information.general.race = $(this).val();
+            $("#general-stats").text(`${information.general.name}, ${information.general.level} Level ${information.general.class} (${information.general.race})`);
+        });
+    });
+
+    function loadInformation()
+    {
+        // Create a change handler
+        let infoHandler = {
+            // A changed attribute will always dump the current information
+            set: function (obj, prop, value)
+            {
+                obj[prop] = value;
+                $("#information-container").text(JSON.stringify(information));
+            }
+        };
+
+        // Apply the change handler to each sub-object in information
+        for (let sub in information)
+            if (information.hasOwnProperty(sub))
+                information[sub] = new Proxy(information[sub], infoHandler);
+
+        // Apply the handler to information itself
+        information = new Proxy(information, infoHandler);
+        $("#information-container").text(JSON.stringify(information));
+
+        // Load header information
+        document.title = "D&D Sheet - " + information.general.name;
+        $("#general-stats").text(`${information.general.name}, ${information.general.level} Level ${information.general.class} (${information.general.race})`);
+
+        // Load attributes
+        $("#stat-table tr").each(function ()
+        {
+            let attribute = $(this).children().eq(0).text().toLowerCase();
+            let stat = information.stats[attribute];
+            let mod = statToModifier(information.stats[attribute]);
+
+            if (mod > 0)
+                mod = "+" + mod;
+
+            // Update table
+            $(this).children().eq(1).text(stat);
+            $(this).children().eq(2).text(mod);
+
+        });
+
+        // Load abilities and proficiencies
+        updateAbilities();
+    }
+
+    function updateAbilities()
+    {
+        let table = $("#ability-table");
+
+        let rows = "<tr><th>Ability</th><th>Mod</th></tr>";
+
+        Object.keys(abilityMapping).sort().forEach(function (key)
+        {
+            // Load stat modifier
+            let stat = statToModifier(information.stats[abilityMapping[key]]);
+
+            // Add proficiency
+            if (information.proficiency.hasOwnProperty(key) && information.proficiency[key])
+                if (information.expertise.hasOwnProperty(key) && information.expertise[key])
+                    stat += levelMapping[information.general.level][1] * 2;
+                else
+                    stat += levelMapping[information.general.level][1];
+
+            // Add add sign
+            if (stat > 0)
+                stat = "+" + stat;
+
+            // Add row
+            rows += `<tr><td>${key}</td><td>${stat}</td></tr>`;
+        });
+
+        // Insert generated elements
+        table.html(rows);
+
+        table.find("tr").click(function ()
+        {
+            let target = $(this);
+            let modal = $("#ability-modal");
+            let profSwitch = modal.find("#switch-is-proficient");
+            let expSwitch = modal.find("#switch-is-expertise");
+            let ability = target.children().eq(0).text();
+
+            // Set up switches
+            if (information.proficiency.hasOwnProperty(ability) && information.proficiency[ability])
+            {
+                profSwitch.prop("checked", true);
+                expSwitch.parent().show();
+
+                expSwitch.prop("checked", information.expertise.hasOwnProperty(ability) && information.expertise[ability]);
+
+            } else
+            {
+                profSwitch.prop("checked", false);
+                expSwitch.parent().hide();
+            }
+
+            // Set modal title to the selected ability
+            modal.find(".modal-title").text(ability);
+
+            // Change handler for proficiency switch
+            profSwitch.off()
+                .change(function ()
+                {
+                    let checked = $(this).prop("checked");
+
+                    if (checked)
+                    {
+                        // Show expertise switch
+                        expSwitch.prop("checked", false)
+                            .parent().show();
+                    } else
+                    {
+                        // Apply implied effects to expertise
+                        expSwitch.prop("checked", false)
+                            .parent().hide();
+                        information.expertise[ability] = false;
+                    }
+
+                    // Set value in information object
+                    information.proficiency[ability] = checked;
+
+                    // Update table
+                    updateAbilities();
+                });
+
+            // Change handler for expertise switch
+            expSwitch.off()
+                .change(function ()
+                {
+                    // Set value in information object
+                    information.expertise[ability] = $(this).prop("checked");
+
+                    // Update table
+                    updateAbilities();
+                });
+
+            // Open modal
+            modal.modal();
+        })
+    }
+
+    // Convert an attribute into a modifier
+    function statToModifier(stat)
+    {
+        return Math.floor((parseInt(stat) - 10) / 2);
+    }
+</script>
+
+</body>
+</html>

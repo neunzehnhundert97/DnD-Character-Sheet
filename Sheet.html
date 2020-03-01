@@ -331,6 +331,7 @@
 <div id="information-container" class="hidden"></div>
 
 <script>
+    "use strict";
 
     let abilityMapping = {
         "Acrobatics": "dex",
@@ -377,14 +378,22 @@
     };
 
     // Define default information
-    let information;
+    let information = null;
 
+    // Load information object from file
     let embeddedInfo = $("#information-container").text();
     if (embeddedInfo.length > 10)
-        information = JSON.parse(embeddedInfo);
-    else
+        try
+        {
+            information = JSON.parse(embeddedInfo);
+        } catch (e)
+        {
+            console.log("Cannot parse embedded information, use default one instead")
+        }
+
+    if (information === null)
         information = {
-            general: {name: "Name", level: 1, class: "Fighter", race: "Cyber elf", experience: 0, proficiency: 2},
+            general: {name: "Name", level: 1, class: "Fighter", race: "Cyber elf", experience: 0},
             stats: {str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10},
             proficiency: {"Acrobatics": true},
             expertise: {}
@@ -396,7 +405,6 @@
     function raceHandler()
     {
         information.general.race = $(this).val();
-        $("#general-stats").text(`${information.general.name}, ${information.general.level} Level ${information.general.class} (${information.general.race})`);
     }
 
     // Define ready function
@@ -447,8 +455,33 @@
             // A changed attribute will always dump the current information
             set: function (obj, prop, value)
             {
+                // Set value
                 obj[prop] = value;
+
+                // Update information in file
                 $("#information-container").text(JSON.stringify(information));
+
+                // Look for updates in need
+                if (Object.keys(information.stats).includes(prop))
+                {
+                    updateAbilities();
+                    updateWeaponList();
+                }
+
+                if (Object.keys(information.general).includes(prop))
+                {
+                    $("#general-stats").text(`${information.general.name}, ${information.general.level} Level ${information.general.class} (${information.general.race})`);
+                    updateWeaponList();
+                    updateAbilities();
+                }
+
+
+                if (Object.keys(information.proficiency).includes(prop))
+                {
+                    updateAbilities();
+                }
+
+                return true;
             }
         };
 
@@ -675,7 +708,6 @@
     function classHandler()
     {
         information.general.class = $(this).val();
-        $("#general-stats").text(`${information.general.name}, ${information.general.level} Level ${information.general.class} (${information.general.race})`);
     }
 
     function experienceHandler()
@@ -693,8 +725,6 @@
 
         // Update shown information
         $("#general-modal select[name=level]").val(level);
-        $("#general-stats").text(`${information.general.name}, ${information.general.level} Level ${information.general.class} (${information.general.race})`);
-        updateAbilities();
     }
 
     function levelHandler()
@@ -707,15 +737,12 @@
 
         // Update shown information
         $("#general-modal input[name=experience]").val(levelMapping[level][0]);
-        $("#general-stats").text(`${information.general.name}, ${information.general.level} Level ${information.general.class} (${information.general.race})`);
-        updateAbilities();
     }
 
     function nameHandler()
     {
         information.general.name = $(this).val();
         document.title = "D&D Sheet - " + information.general.name;
-        $("#general-stats").text(`${information.general.name}, ${information.general.level} Level ${information.general.class} (${information.general.race})`);
     }
 
     function saveHandler()

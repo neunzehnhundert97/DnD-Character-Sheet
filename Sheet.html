@@ -880,12 +880,17 @@
     {
         let xp = parseInt($(this).val());
 
-        let level = 1;
+        // Unparseable inputs are set to 0
+        if (isNaN(xp))
+            xp = 0;
 
+        // Find matching level
+        let level = 1;
         for (; level < 20; ++level)
-            if (levelMapping[level][0] > xp)
+            if (levelMapping[level + 1][0] > xp)
                 break;
 
+        // Set xp and level
         information.general.experience = xp;
         information.general.level = level;
 

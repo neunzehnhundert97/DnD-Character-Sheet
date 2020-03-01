@@ -25,7 +25,7 @@
             margin-bottom: 0;
         }
 
-        #stat-table td {
+        #stat-table td, #stat-table th {
             text-align: center;
         }
 
@@ -101,12 +101,20 @@
 
 <div id="slider-common" class="container-fluid">
     <div class="row">
+
         <div class="col-sm-2">
 
             <!-- Table with attributes -->
             <table id="stat-table" class="table not-selectable">
+                <tr>
+                    <th>Stat</th>
+                    <th>Score</th>
+                    <th>Mod</th>
+                    <th>Save</th>
+                </tr>
                 <tr class="row-stat">
                     <td>STR</td>
+                    <td></td>
                     <td></td>
                     <td></td>
                 </tr>
@@ -114,9 +122,11 @@
                     <td>DEX</td>
                     <td></td>
                     <td></td>
+                    <td></td>
                 </tr>
                 <tr class="row-stat">
                     <td>CON</td>
+                    <td></td>
                     <td></td>
                     <td></td>
                 </tr>
@@ -124,9 +134,11 @@
                     <td>INT</td>
                     <td></td>
                     <td></td>
+                    <td></td>
                 </tr>
                 <tr class="row-stat">
                     <td>WIS</td>
+                    <td></td>
                     <td></td>
                     <td></td>
                 </tr>
@@ -134,10 +146,12 @@
                     <td>CHA</td>
                     <td></td>
                     <td></td>
+                    <td></td>
                 </tr>
             </table>
 
         </div>
+
         <div class="col-sm-2">
 
             <!-- Table with abilities and proficiencies -->
@@ -452,18 +466,26 @@
         $("#general-stats").text(`${information.general.name}, ${information.general.level} Level ${information.general.class} (${information.general.race})`);
 
         // Load attributes
-        $("#stat-table tr").each(function ()
+        $("#stat-table tr.row-stat").each(function ()
         {
             let attribute = $(this).children().eq(0).text().toLowerCase();
             let stat = information.stats[attribute];
             let mod = statToModifier(information.stats[attribute]);
+            let save = mod;
+
+            if (information.proficiency["attribute"])
+                save += information.general.proficiency;
 
             if (mod > 0)
                 mod = "+" + mod;
 
+            if (save > 0)
+                save = "+" + save;
+
             // Update table
             $(this).children().eq(1).text(stat);
             $(this).children().eq(2).text(mod);
+            $(this).children().eq(3).text(save);
 
         });
 
@@ -500,7 +522,7 @@
         // Insert generated elements
         table.html(rows);
 
-        table.find("tr").click(function ()
+        table.find("tr:not(:first-child)").click(function ()
         {
             let target = $(this);
             let modal = $("#ability-modal");
@@ -622,13 +644,31 @@
                 // Get selected values
                 let values = $(this).val().split(" (");
 
+                let mod = parseInt(values[1].replace(")", ""));
+
+                let save = mod;
+
+                if (information.proficiency[attribute])
+                    save += information.general.proficiency;
+
                 // Write values into table and information object
                 information.stats[attribute.toLowerCase()] = values[0];
-                updateAbilities();
                 target.children().eq(1).text(values[0]);
-                target.children().eq(2).text(values[1].replace(")", ""));
+                target.children().eq(2).text(mod);
+                target.children().eq(3).text(save);
+
                 $("#stats-modal").modal("hide");
             });
+
+        $("#stats-modal input")
+            .off()
+            .prop("checked", information.proficiency.hasOwnProperty(attribute.toLowerCase()) && information.proficiency[attribute.toLowerCase()])
+            .change(function ()
+            {
+                // Update proficiency
+                information.proficiency[attribute.toLowerCase()] = $(this).prop("checked");
+            });
+
         $("#stats-modal").modal();
     }
 

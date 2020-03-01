@@ -169,6 +169,13 @@
 
         </div>
 
+        <div class="col-sm-2" style="text-align: center">
+            <table id="weapon-table" class="table">
+
+            </table>
+            <button class="btn btn-secondary" id="add-weapon-button">Add weapon</button>
+        </div>
+
     </div>
 
 </div>
@@ -336,6 +343,90 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal for editing general information -->
+    <div class="modal fade" id="weapon-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title"></h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body" style="text-align: center;">
+                    <div class="alert-container"></div>
+
+                    <div class="input-group">
+                        <input placeholder="Name" class="form-control" name="weapon-name">
+                        <select name="weapon-type" class="form-control">
+                            <option>melee</option>
+                            <option>ranged</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <input name="weapon-dice-number" class="form-control" placeholder="Number">
+                        <select name="weapon-die-type" class="form-control">
+                            <option>d4</option>
+                            <option>d6</option>
+                            <option>d8</option>
+                            <option>d10</option>
+                            <option>d12</option>
+                            <option>d20</option>
+                        </select>
+                        <span class="input-group-text versatile-die" style="display: none"></span>
+                        <select name="weapon-damage-type" class="form-control">
+                            <option>bludgeoning</option>
+                            <option>piercing</option>
+                            <option>slashing</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="custom-control custom-switch form-control">
+                            <input id="weapon-is-proficient" class="custom-control-input" type="checkbox">
+                            <label for="weapon-is-proficient" class="custom-control-label">Proficient</label>
+                        </div>
+                        <select class="form-control" name="weapon-hand">
+                            <option>Hand property</option>
+                            <option>Light</option>
+                            <option>Versatile</option>
+                            <option>Two-Handed</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="custom-control custom-switch form-control">
+                            <input id="weapon-is-finesse" class="custom-control-input" type="checkbox">
+                            <label for="weapon-is-finesse" class="custom-control-label">Finesse</label>
+                        </div>
+                        <div class="custom-control custom-switch form-control" style="display: none;">
+                            <input id="weapon-is-heavy" class="custom-control-input" type="checkbox">
+                            <label for="weapon-is-heavy" class="custom-control-label">Heavy</label>
+                        </div>
+                        <div class="custom-control custom-switch form-control">
+                            <input id="weapon-is-reached" class="custom-control-input" type="checkbox">
+                            <label for="weapon-is-reached" class="custom-control-label">Reach</label>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <input name="weapon-hit-bonus" placeholder="Hit Bonus (optional)" class="form-control">
+                        <input name="weapon-damage-bonus" placeholder="Damage Bonus (optional)" class="form-control">
+                    </div>
+
+                    <input name="index" class="hidden">
+
+                    <button id="create-new-weapon" class="btn btn-success mt-2">Add weapon</button>
+                    <button id="create-delete-weapon" class="btn btn-danger mt-2">Remove weapon</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <div id="information-container" class="hidden"></div>
@@ -387,6 +478,8 @@
         20: [355000, 6],
     };
 
+    let dice = ["d4", "d6", "d8", "d10", "d12", "d20"];
+
     // Define default information
     let information = null;
 
@@ -405,8 +498,24 @@
         information = {
             general: {name: "Name", level: 1, class: "Fighter", race: "Cyber elf", experience: 0},
             stats: {str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10},
-            proficiency: {"Acrobatics": true},
-            expertise: {}
+            proficiency: {},
+            expertise: {},
+            weapons: [{
+                "name": "Dolch",
+                "die": "d4",
+                "dieCount": 1,
+                "type": "melee",
+                "hitBonus": 0,
+                "damageBonus": 0,
+                "proficiency": true,
+                "finesse": true,
+                "heavy": false,
+                "reach": false,
+                "light": true,
+                "versatile": false,
+                "twoHanded": false,
+                "damageType": "piercing"
+            }],
         };
 
     // Apply the default information
@@ -456,6 +565,14 @@
         $("#general-modal input[name=class]").change(classHandler);
 
         $("#general-modal input[name=race]").change(raceHandler);
+
+        $("#add-weapon-button").click(addWeaponHandler);
+
+        $("#create-new-weapon").click(createNewWeaponHandler);
+
+        $("#weapon-modal [name=weapon-hand]").change(weaponHandHandler);
+
+        $("#weapon-modal [name=weapon-die-type]").change(() => $("#weapon-modal [name=weapon-hand]").change());
     });
 
     function loadInformation()
@@ -534,6 +651,7 @@
 
         // Load abilities and proficiencies
         updateAbilities();
+        updateWeaponList();
     }
 
     function updateAbilities()
@@ -770,6 +888,166 @@
         document.body.appendChild(element);
         element.click();
         document.body.removeChild(element);
+    }
+
+    function addWeaponHandler()
+    {
+        $("#weapon-modal .modal-title").text("New weapon");
+        $("#weapon-modal input").val("");
+        $("#weapon-modal select[name=weapon-hand]").val("Hand property").change();
+        $("#weapon-modal select[name=weapon-die-type]").val("d6");
+        $("#weapon-modal [type=checkbox]").prop("checked", false);
+        $("#weapon-modal").modal();
+    }
+
+    function createNewWeaponHandler()
+    {
+        let name = $("#weapon-modal [name=weapon-name]").val();
+        let type = $("#weapon-modal [name=weapon-type]").val();
+        let count = parseInt($("#weapon-modal [name=weapon-dice-number]").val());
+        let die = $("#weapon-modal [name=weapon-die-type]").val();
+        let hitBonus = parseInt($("#weapon-modal [name=weapon-hit-bonus]").val());
+        let damageBonus = parseInt($("#weapon-modal [name=weapon-damage-bonus]").val());
+        let damageType = $("#weapon-modal [name=weapon-damage-type]").val();
+        let index = $("#weapon-modal [name=index]").val();
+
+        // Check for name
+        if (name.length === 0)
+        {
+            $("#weapon-modal .alert-container").html("<div class=\"alert alert-danger alert-dismissible fade show\">\n" +
+                "<button type=\"button\" class=\"close\" data-dismiss=\"alert\">&times;</button>\n" +
+                "<span>The weapon needs to have a name.</span></div>");
+            return;
+        }
+
+        // Check for damage
+        if (isNaN(count))
+        {
+            $("#weapon-modal .alert-container").html("<div class=\"alert alert-danger alert-dismissible fade show\">\n" +
+                "<button type=\"button\" class=\"close\" data-dismiss=\"alert\">&times;</button>\n" +
+                "<span>Count missing or not a number</span></div>");
+            return;
+        }
+
+        let weapon = {
+            name: name,
+            die: die,
+            dieCount: count,
+            type: type,
+            damageType: damageType,
+            hitBonus: isNaN(hitBonus) ? 0 : hitBonus,
+            damageBonus: isNaN(damageBonus) ? 0 : damageBonus,
+            proficiency: $("#weapon-is-proficient").prop("checked"),
+            finesse: $("#weapon-is-finesse").prop("checked"),
+            heavy: $("#weapon-is-heavy").prop("checked"),
+            reach: $("#weapon-is-reached").prop("checked"),
+            light: $("#weapon-modal [name=weapon-hand]").val() === "Light",
+            versatile: $("#weapon-modal [name=weapon-hand]").val() === "Versatile",
+            twoHanded: $("#weapon-modal [name=weapon-hand]").val() === "Two-Handed"
+        };
+
+        if (index === "")
+            information.weapons.push(weapon);
+        else
+            information.weapons[parseInt(index)] = weapon;
+
+        updateWeaponList();
+        $("#weapon-modal").modal("hide");
+    }
+
+    function updateWeaponList()
+    {
+        let table = $("#weapon-table");
+        table.html("<tr><th>Weapon</th><th>to hit</th><th>damage</th></tr>");
+
+        information.weapons.forEach(function (weapon, index)
+        {
+            let damage = weapon.damageBonus;
+            let toHit = weapon.hitBonus;
+
+            if (weapon.proficiency)
+                toHit += levelMapping[information.general.level][1];
+
+            let mod = 0;
+
+            if (weapon.type === "melee" && (!weapon.finesse || information.stats.str > information.stats.dex))
+            {
+                mod = statToModifier(information.stats.str);
+            } else
+            {
+                mod = statToModifier(information.stats.dex);
+            }
+
+            damage += mod;
+            toHit += mod;
+
+            table.append(`<tr class="not-selectable" data-index="${index}"><td>${weapon.name}</td><td>${toHit}</td><td>${damage}</td></tr>`);
+        });
+
+        table.find("tr:not(:first-child)").contextmenu(weaponHandler)
+    }
+
+    function weaponHandHandler()
+    {
+        switch ($(this).val())
+        {
+            case "Light":
+                $("#weapon-is-heavy").prop("checked", false).parent().hide();
+                $("#weapon-is-finesse").parent().show();
+                $("#weapon-modal .versatile-die").hide();
+                break;
+            case "Versatile":
+                $("#weapon-is-heavy").prop("checked", false).parent().hide();
+                $("#weapon-is-finesse").prop("checked", false).parent().hide();
+                $("#weapon-modal .versatile-die").show().text("/ " + (dice[dice.indexOf($("#weapon-modal [name=weapon-die-type]").val()) + 1]));
+                break;
+            case "Two-Handed":
+                $("#weapon-is-heavy").parent().show();
+                $("#weapon-is-finesse").prop("checked", false).parent().hide();
+                $("#weapon-modal .versatile-die").hide();
+                break;
+            default:
+                $("#weapon-is-heavy").prop("checked", false).parent().hide();
+                $("#weapon-is-finesse").parent().show();
+                $("#weapon-modal .versatile-die").hide();
+        }
+    }
+
+    function weaponHandler(e)
+    {
+        e.preventDefault();
+
+        let weapon = information.weapons[$(this).attr("data-index")];
+
+        $("#weapon-modal .modal-title").text("Modify weapon");
+
+        // Insert information
+        $("#weapon-modal [name=weapon-name]").val(weapon.name);
+        $("#weapon-modal [name=weapon-type]").val(weapon.type);
+        $("#weapon-modal [name=weapon-dice-number]").val(weapon.dieCount);
+        $("#weapon-modal [name=weapon-die-type]").val(weapon.die);
+        $("#weapon-modal [name=weapon-damage-type]").val(weapon.damageType);
+        $("#weapon-modal #weapon-is-proficient").prop("checked", weapon.proficiency);
+        $("#weapon-modal #weapon-is-reached").prop("checked", weapon.reach);
+        if (weapon.light)
+        {
+            $("#weapon-modal [name=weapon-hand]").val("Light");
+            $("#weapon-modal #weapon-is-finesse").prop("checked", weapon.finesse);
+        } else if (weapon.versatile)
+        {
+            $("#weapon-modal [name=weapon-hand]").val("Versatile");
+        } else if (weapon.twoHanded)
+        {
+            $("#weapon-modal [name=weapon-hand]").val("Two-Handed");
+            $("#weapon-modal #weapon-is-heavy").prop("checked", weapon.heavy);
+        } else
+            $("#weapon-modal [name=weapon-hand]").val("Hand property");
+
+        $("#weapon-modal [name=weapon-hit-bonus]").val(weapon.hitBonus);
+        $("#weapon-modal [name=weapon-damage-bonus]").val(weapon.damageBonus);
+        $("#weapon-modal [name=index]").val($(this).attr("data-index"));
+
+        $("#weapon-modal").modal();
     }
 
     // Convert an attribute into a modifier

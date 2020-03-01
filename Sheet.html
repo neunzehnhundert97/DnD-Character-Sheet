@@ -169,7 +169,7 @@
 
         </div>
 
-        <div class="col-sm-2" style="text-align: center">
+        <div class="col-sm-3" style="text-align: center">
             <table id="weapon-table" class="table">
 
             </table>
@@ -390,6 +390,14 @@
                             <input id="weapon-is-proficient" class="custom-control-input" type="checkbox">
                             <label for="weapon-is-proficient" class="custom-control-label">Proficient</label>
                         </div>
+                        <div class="custom-control custom-switch form-control">
+                            <input id="weapon-is-thrown" class="custom-control-input" type="checkbox">
+                            <label for="weapon-is-thrown" class="custom-control-label">Thrown</label>
+                        </div>
+                        <div class="custom-control custom-switch form-control">
+                            <input id="weapon-is-loading" class="custom-control-input" type="checkbox">
+                            <label for="weapon-is-loading" class="custom-control-label">Loading</label>
+                        </div>
                         <select class="form-control" name="weapon-hand">
                             <option>Hand property</option>
                             <option>Light</option>
@@ -398,7 +406,14 @@
                         </select>
                     </div>
 
-                    <div class="input-group">
+                    <div class="input-group weapon-range">
+                        <div class="input-group-prepend"><span class="input-group-text">Range</span></div>
+                        <input class="form-control" placeholder="Short range" name="short-range">
+                        <div class="input-group-append"><span class="input-group-text">/</span></div>
+                        <input class="form-control" placeholder="Long range" name="long-range">
+                    </div>
+
+                    <div class="input-group weapon-melee-properties">
                         <div class="custom-control custom-switch form-control">
                             <input id="weapon-is-finesse" class="custom-control-input" type="checkbox">
                             <label for="weapon-is-finesse" class="custom-control-label">Finesse</label>
@@ -421,7 +436,7 @@
                     <input name="index" class="hidden">
 
                     <button id="create-new-weapon" class="btn btn-success mt-2">Add weapon</button>
-                    <button id="create-delete-weapon" class="btn btn-danger mt-2">Remove weapon</button>
+                    <button id="delete-weapon" class="btn btn-danger mt-2">Remove weapon</button>
                 </div>
             </div>
         </div>
@@ -500,22 +515,39 @@
             stats: {str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10},
             proficiency: {},
             expertise: {},
-            weapons: [{
-                "name": "Dolch",
-                "die": "d4",
-                "dieCount": 1,
-                "type": "melee",
-                "hitBonus": 0,
-                "damageBonus": 0,
-                "proficiency": true,
-                "finesse": true,
-                "heavy": false,
-                "reach": false,
-                "light": true,
-                "versatile": false,
-                "twoHanded": false,
-                "damageType": "piercing"
-            }],
+            weapons: [
+                {
+                    "name": "Dolch",
+                    "die": "d4",
+                    "dieCount": 1,
+                    "type": "melee",
+                    "hitBonus": 0,
+                    "damageBonus": 0,
+                    "proficiency": true,
+                    "finesse": true,
+                    "heavy": false,
+                    "reach": false,
+                    "light": true,
+                    "versatile": false,
+                    "twoHanded": false,
+                    "damageType": "piercing"
+                },
+                {
+                    "name": "Quarterstaff",
+                    "die": "d6",
+                    "dieCount": 1,
+                    "type": "melee",
+                    "damageType": "bludgeoning",
+                    "hitBonus": 0,
+                    "damageBonus": 0,
+                    "proficiency": true,
+                    "finesse": false,
+                    "heavy": false,
+                    "reach": false,
+                    "light": false,
+                    "versatile": true,
+                    "twoHanded": false
+                }],
         };
 
     // Apply the default information
@@ -570,7 +602,13 @@
 
         $("#create-new-weapon").click(createNewWeaponHandler);
 
+        $("#delete-weapon").click(removeWeapon);
+
         $("#weapon-modal [name=weapon-hand]").change(weaponHandHandler);
+
+        $("#weapon-modal [name=weapon-type]").change(weaponTypeHandler);
+
+        $("#weapon-is-thrown").change(weaponThrownHandler);
 
         $("#weapon-modal [name=weapon-die-type]").change(() => $("#weapon-modal [name=weapon-hand]").change());
     });
@@ -894,9 +932,14 @@
     {
         $("#weapon-modal .modal-title").text("New weapon");
         $("#weapon-modal input").val("");
+        $("#weapon-modal [name=weapon-type]").val("melee");
         $("#weapon-modal select[name=weapon-hand]").val("Hand property").change();
         $("#weapon-modal select[name=weapon-die-type]").val("d6");
         $("#weapon-modal [type=checkbox]").prop("checked", false);
+        $("#weapon-is-loading").parent().hide();
+        $("#create-new-weapon").text("Add weapon");
+        $("#delete-weapon").hide();
+        $("#weapon-modal div.weapon-range").hide();
         $("#weapon-modal").modal();
     }
 
@@ -941,9 +984,13 @@
             finesse: $("#weapon-is-finesse").prop("checked"),
             heavy: $("#weapon-is-heavy").prop("checked"),
             reach: $("#weapon-is-reached").prop("checked"),
+            loading: $("#weapon-is-loading").prop("checked"),
             light: $("#weapon-modal [name=weapon-hand]").val() === "Light",
             versatile: $("#weapon-modal [name=weapon-hand]").val() === "Versatile",
-            twoHanded: $("#weapon-modal [name=weapon-hand]").val() === "Two-Handed"
+            twoHanded: $("#weapon-modal [name=weapon-hand]").val() === "Two-Handed",
+            thrown: $("#weapon-is-thrown").prop("checked"),
+            shortRange: $("#weapon-modal [name=short-range]").val(),
+            longRange: $("#weapon-modal [name=long-range]").val()
         };
 
         if (index === "")
@@ -955,21 +1002,30 @@
         $("#weapon-modal").modal("hide");
     }
 
+    function removeWeapon()
+    {
+        let index = $("#weapon-modal [name=index]").val();
+        information.weapons.splice(parseInt(index), 1);
+        updateWeaponList();
+        $("#weapon-modal").modal("hide");
+    }
+
     function updateWeaponList()
     {
         let table = $("#weapon-table");
-        table.html("<tr><th>Weapon</th><th>to hit</th><th>damage</th></tr>");
+        table.html("<tr><th>Weapon</th><th>range</th><th>to hit</th><th>damage</th></tr>");
 
         information.weapons.forEach(function (weapon, index)
         {
             let damage = weapon.damageBonus;
             let toHit = weapon.hitBonus;
 
+            // Apply proficiency
             if (weapon.proficiency)
                 toHit += levelMapping[information.general.level][1];
 
+            // Compute modifier
             let mod = 0;
-
             if (weapon.type === "melee" && (!weapon.finesse || information.stats.str > information.stats.dex))
             {
                 mod = statToModifier(information.stats.str);
@@ -981,10 +1037,55 @@
             damage += mod;
             toHit += mod;
 
-            table.append(`<tr class="not-selectable" data-index="${index}"><td>${weapon.name}</td><td>${toHit}</td><td>${damage}</td></tr>`);
+            let count = weapon.dieCount > 1 ? weapon.dieCount : "";
+
+            // Prepare dis play damage
+            if (damage > 0)
+                damage = " + " + damage;
+            else if (damage < 0)
+                damage = " - " + damage;
+            else
+                damage = "";
+
+
+            damage = `${count}${weapon.die}${weapon.versatile ? "/" + dice[dice.indexOf(weapon.die) + 1] : ""}${damage}`;
+
+            let range = "-";
+
+            if (weapon.type === "ranged" || weapon.thrown)
+                range = `${weapon.shortRange} / ${weapon.longRange}`;
+
+            table.append(`<tr class="not-selectable" data-index="${index}"><td>${weapon.name}</td><td>${range}</td><td>${toHit}</td><td>${damage}</td></tr>`);
         });
 
-        table.find("tr:not(:first-child)").contextmenu(weaponHandler)
+        table.find("tr:not(:first-child)").click(weaponHandler)
+    }
+
+    function weaponTypeHandler()
+    {
+        if ($(this).val() === "melee")
+        {
+            $("#weapon-modal div.weapon-range").hide();
+            $("#weapon-is-thrown").parent().show();
+            $("#weapon-is-reached").parent().show();
+            $("#weapon-is-loading").parent().hide();
+            $("#weapon-modal select[name=weapon-hand] option:eq(2)").show();
+        } else
+        {
+            $("#weapon-modal div.weapon-range").show();
+            $("#weapon-is-thrown").parent().hide();
+            $("#weapon-is-reached").parent().hide();
+            $("#weapon-is-loading").parent().show();
+            $("#weapon-modal select[name=weapon-hand] option:eq(2)").hide();
+        }
+    }
+
+    function weaponThrownHandler()
+    {
+        if ($(this).prop("checked"))
+            $("#weapon-modal div.weapon-range").show();
+        else
+            $("#weapon-modal div.weapon-range").hide();
     }
 
     function weaponHandHandler()
@@ -1046,6 +1147,27 @@
         $("#weapon-modal [name=weapon-hit-bonus]").val(weapon.hitBonus);
         $("#weapon-modal [name=weapon-damage-bonus]").val(weapon.damageBonus);
         $("#weapon-modal [name=index]").val($(this).attr("data-index"));
+        $("#create-new-weapon").text("Modify weapon");
+        $("#delete-weapon").show();
+
+        if (weapon.type === "melee")
+        {
+            $("#weapon-modal div.weapon-range").hide();
+            $("#weapon-is-thrown").parent().show();
+            $("#weapon-is-reached").parent().show();
+            $("#weapon-is-loading").parent().hide();
+            $("#weapon-modal select[name=weapon-hand] option:eq(2)").show();
+        } else
+        {
+            $("#weapon-modal div.weapon-range").show();
+            $("#weapon-is-thrown").parent().hide();
+            $("#weapon-is-reached").parent().hide();
+            $("#weapon-is-loading").parent().show();
+            $("#weapon-modal select[name=weapon-hand] option:eq(2)").hide();
+        }
+
+        if (weapon.thrown)
+            $("#weapon-modal div.weapon-range").show();
 
         $("#weapon-modal").modal();
     }

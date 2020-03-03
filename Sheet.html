@@ -570,11 +570,19 @@
             $("#import-modal").modal();
         });
 
+        $("#stat-table th:first-child").click(showStatTable);
+
+        $("#stat-table th:not(:first-child)").contextmenu(hideStatColumn);
+
+        $("#stat-table tr:not(:first-child) td:first-child").contextmenu(hideStatRow);
+
         // Click handler for the import functionality
         $("#import-string-button").click(importHandler);
 
+        // Click handler for export functionality
         $("#button-export").click(exportHandler);
 
+        // Save handler
         $("#button-save").click(saveHandler);
 
         // Set click handler for general information
@@ -588,30 +596,47 @@
             $("#general-modal").modal();
         });
 
+        // Click handler for elements in general modal
         $("#general-modal input[name=name]").change(nameHandler);
-
         $("#general-modal select[name=level]").change(levelHandler);
-
         $("#general-modal input[name=experience]").change(experienceHandler);
-
         $("#general-modal input[name=class]").change(classHandler);
-
         $("#general-modal input[name=race]").change(raceHandler);
 
+        // Handler for weapons
         $("#add-weapon-button").click(addWeaponHandler);
-
         $("#create-new-weapon").click(createNewWeaponHandler);
-
         $("#delete-weapon").click(removeWeapon);
-
         $("#weapon-modal [name=weapon-hand]").change(weaponHandHandler);
-
         $("#weapon-modal [name=weapon-type]").change(weaponTypeHandler);
-
         $("#weapon-is-thrown").change(weaponThrownHandler);
-
         $("#weapon-modal [name=weapon-die-type]").change(() => $("#weapon-modal [name=weapon-hand]").change());
     });
+
+    function showStatTable()
+    {
+        $("#stat-table *").show();
+    }
+
+    function hideStatColumn(e)
+    {
+        e.preventDefault();
+
+        // Get index of header
+        let index = 0;
+        let child = this;
+        while ((child = child.previousSibling) != null)
+            if (child.tagName === "TH")
+                index++;
+
+        $("#stat-table tr *:nth-child(" + (index + 1) + ")").hide();
+    }
+
+    function hideStatRow(e)
+    {
+        e.preventDefault();
+        $(this).parent().hide();
+    }
 
     function loadInformation()
     {

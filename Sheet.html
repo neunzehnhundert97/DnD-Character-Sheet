@@ -460,6 +460,8 @@
                         <div class="input-group-append"><span class="input-group-text">Damage Bonus</span></div>
                     </div>
 
+                    <textarea class="form-control" rows="5" placeholder="Notes" name="notes"></textarea>
+
                     <input name="index" class="hidden">
 
                     <button id="create-new-weapon" class="btn btn-success mt-2">Add weapon</button>
@@ -1037,6 +1039,7 @@
             dieCount: count,
             type: type,
             damageType: damageType,
+            notes: $("#weapon-modal [name=notes]").val(),
             hitBonus: isNaN(hitBonus) ? 0 : hitBonus,
             damageBonus: isNaN(damageBonus) ? 0 : damageBonus,
             proficiency: $("#weapon-is-proficient").prop("checked"),
@@ -1187,6 +1190,7 @@
         $("#weapon-modal [name=weapon-dice-number]").val(weapon.dieCount);
         $("#weapon-modal [name=weapon-die-type]").val(weapon.die);
         $("#weapon-modal [name=weapon-damage-type]").val(weapon.damageType);
+        $("#weapon-modal [name=notes]").val(weapon.notes);
         $("#weapon-modal #weapon-is-proficient").prop("checked", weapon.proficiency);
         $("#weapon-modal #weapon-is-reached").prop("checked", weapon.reach);
         if (weapon.light)

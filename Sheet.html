@@ -283,36 +283,59 @@
 
                 <!-- Modal body -->
                 <div class="modal-body" style="text-align: center;">
-                    <input type="text" placeholder="Name" class="form-control" name="name">
-                    <table>
-                        <tr>
-                            <td><select class="form-control" name="level">
-                                <option>1</option>
-                                <option>2</option>
-                                <option>3</option>
-                                <option>4</option>
-                                <option>5</option>
-                                <option>6</option>
-                                <option>7</option>
-                                <option>8</option>
-                                <option>9</option>
-                                <option>10</option>
-                                <option>11</option>
-                                <option>12</option>
-                                <option>13</option>
-                                <option>14</option>
-                                <option>15</option>
-                                <option>16</option>
-                                <option>17</option>
-                                <option>18</option>
-                                <option>19</option>
-                                <option>20</option>
-                            </select></td>
-                            <td><input class="form-control" name="experience" type="number"></td>
-                        </tr>
-                    </table>
-                    <input type="text" placeholder="Class" class="form-control" name="class">
-                    <input type="text" placeholder="Race" class="form-control" name="race">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Name</span>
+                        </div>
+                        <input type="text" class="form-control" name="name">
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Level</span>
+                        </div>
+                        <select class="form-control" name="level">
+                            <option>1</option>
+                            <option>2</option>
+                            <option>3</option>
+                            <option>4</option>
+                            <option>5</option>
+                            <option>6</option>
+                            <option>7</option>
+                            <option>8</option>
+                            <option>9</option>
+                            <option>10</option>
+                            <option>11</option>
+                            <option>12</option>
+                            <option>13</option>
+                            <option>14</option>
+                            <option>15</option>
+                            <option>16</option>
+                            <option>17</option>
+                            <option>18</option>
+                            <option>19</option>
+                            <option>20</option>
+                        </select>
+                        <input class="form-control" name="experience">
+                        <div class="input-group-append">
+                            <span class="input-group-text">XP</span>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Class</span>
+                        </div>
+                        <input type="text" placeholder="Class" class="form-control" name="class">
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Level</span>
+                        </div>
+                        <input type="text" placeholder="Race" class="form-control" name="race">
+
+                    </div>
                 </div>
             </div>
         </div>
@@ -360,6 +383,7 @@
                     <div class="alert-container"></div>
 
                     <div class="input-group">
+                        <div class="input-group-prepend"><span class="input-group-text">Name</span></div>
                         <input placeholder="Name" class="form-control" name="weapon-name">
                         <select name="weapon-type" class="form-control">
                             <option>melee</option>
@@ -368,6 +392,7 @@
                     </div>
 
                     <div class="input-group">
+                        <div class="input-group-prepend"><span class="input-group-text">Damage</span></div>
                         <input name="weapon-dice-number" class="form-control" placeholder="Number">
                         <select name="weapon-die-type" class="form-control">
                             <option>d4</option>
@@ -429,8 +454,10 @@
                     </div>
 
                     <div class="input-group">
-                        <input name="weapon-hit-bonus" placeholder="Hit Bonus (optional)" class="form-control">
-                        <input name="weapon-damage-bonus" placeholder="Damage Bonus (optional)" class="form-control">
+                        <div class="input-group-prepend"><span class="input-group-text">Hit Bonus</span></div>
+                        <input name="weapon-hit-bonus" class="form-control">
+                        <input name="weapon-damage-bonus" class="form-control">
+                        <div class="input-group-append"><span class="input-group-text">Damage Bonus</span></div>
                     </div>
 
                     <input name="index" class="hidden">

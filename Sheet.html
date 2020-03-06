@@ -773,71 +773,73 @@
         // Insert generated elements
         table.html(rows);
 
-        table.find("tr:not(:first-child)").click(function ()
+        table.find("tr:not(:first-child)").click(statHandler)
+    }
+
+    function statHandler()
+    {
+        let target = $(this);
+        let modal = $("#ability-modal");
+        let profSwitch = modal.find("#switch-is-proficient");
+        let expSwitch = modal.find("#switch-is-expertise");
+        let ability = target.children().eq(0).text();
+
+        // Set up switches
+        if (information.proficiency.hasOwnProperty(ability) && information.proficiency[ability])
         {
-            let target = $(this);
-            let modal = $("#ability-modal");
-            let profSwitch = modal.find("#switch-is-proficient");
-            let expSwitch = modal.find("#switch-is-expertise");
-            let ability = target.children().eq(0).text();
+            profSwitch.prop("checked", true);
+            expSwitch.parent().show();
 
-            // Set up switches
-            if (information.proficiency.hasOwnProperty(ability) && information.proficiency[ability])
+            expSwitch.prop("checked", information.expertise.hasOwnProperty(ability) && information.expertise[ability]);
+
+        } else
+        {
+            profSwitch.prop("checked", false);
+            expSwitch.parent().hide();
+        }
+
+        // Set modal title to the selected ability
+        modal.find(".modal-title").text(ability);
+
+        // Change handler for proficiency switch
+        profSwitch.off()
+            .change(function ()
             {
-                profSwitch.prop("checked", true);
-                expSwitch.parent().show();
+                let checked = $(this).prop("checked");
 
-                expSwitch.prop("checked", information.expertise.hasOwnProperty(ability) && information.expertise[ability]);
+                if (checked)
+                {
+                    // Show expertise switch
+                    expSwitch.prop("checked", false)
+                        .parent().show();
+                } else
+                {
+                    // Apply implied effects to expertise
+                    expSwitch.prop("checked", false)
+                        .parent().hide();
+                    information.expertise[ability] = false;
+                }
 
-            } else
+                // Set value in information object
+                information.proficiency[ability] = checked;
+
+                // Update table
+                updateAbilities();
+            });
+
+        // Change handler for expertise switch
+        expSwitch.off()
+            .change(function ()
             {
-                profSwitch.prop("checked", false);
-                expSwitch.parent().hide();
-            }
+                // Set value in information object
+                information.expertise[ability] = $(this).prop("checked");
 
-            // Set modal title to the selected ability
-            modal.find(".modal-title").text(ability);
+                // Update table
+                updateAbilities();
+            });
 
-            // Change handler for proficiency switch
-            profSwitch.off()
-                .change(function ()
-                {
-                    let checked = $(this).prop("checked");
-
-                    if (checked)
-                    {
-                        // Show expertise switch
-                        expSwitch.prop("checked", false)
-                            .parent().show();
-                    } else
-                    {
-                        // Apply implied effects to expertise
-                        expSwitch.prop("checked", false)
-                            .parent().hide();
-                        information.expertise[ability] = false;
-                    }
-
-                    // Set value in information object
-                    information.proficiency[ability] = checked;
-
-                    // Update table
-                    updateAbilities();
-                });
-
-            // Change handler for expertise switch
-            expSwitch.off()
-                .change(function ()
-                {
-                    // Set value in information object
-                    information.expertise[ability] = $(this).prop("checked");
-
-                    // Update table
-                    updateAbilities();
-                });
-
-            // Open modal
-            modal.modal();
-        })
+        // Open modal
+        modal.modal();
     }
 
     // Handling the import button

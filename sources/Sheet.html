@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title></title>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css">
+
+    <script src=".\target\scala-2.13\dndsheetjs-fastopt.js"></script>
+    <link rel="stylesheet" href="Style.css">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+    <!-- General stats like name, class, etc -->
+    <span id="general-stats" class="navbar-brand not-selectable"></span>
+    <ul class="navbar-nav">
+        <li class="nav-item active">
+            <a class="nav-link" href="#">General</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#">Fight</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#">Shopping</a>
+        </li>
+    </ul>
+
+    <!-- Buttons --->
+    <div class="navbar-nav ml-auto">
+        <button id="button-import" class="nav-item btn btn-secondary mx-1" type="button">
+            Import
+        </button>
+        <button id="button-export" class="nav-item btn btn-primary mx-1" type="button">
+            Export
+        </button>
+        <button id="button-save" class="nav-item btn btn-success mx-1" type="button">
+            Save
+        </button>
+    </div>
+</nav>
+
+<div id="slider-common" class="container-fluid">
+    <div class="row">
+
+        <div class="col-lg">
+
+            <!-- Table with attributes -->
+            <table id="stat-table" class="table not-selectable">
+                <tr>
+                    <th>Stat</th>
+                    <th>Score</th>
+                    <th>Mod</th>
+                    <th>Save</th>
+                </tr>
+                <tr class="row-stat">
+                    <td>STR</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr class="row-stat">
+                    <td>DEX</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr class="row-stat">
+                    <td>CON</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr class="row-stat">
+                    <td>INT</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr class="row-stat">
+                    <td>WIS</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr class="row-stat">
+                    <td>CHA</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </table>
+
+        </div>
+
+        <div class="col-lg">
+
+            <!-- Table with abilities and proficiencies -->
+            <table id="ability-table" class="table not-selectable"></table>
+
+            <input id="ability-search" class="form-control mt-1" placeholder="Search">
+
+        </div>
+
+        <div class="col-lg" style="text-align: center">
+            <table id="weapon-table" class="table">
+
+            </table>
+            <button class="btn btn-secondary" id="add-weapon-button">Add weapon</button>
+        </div>
+
+        <div class="col-xl-5" style="text-align: center">
+            <table id="caster-table" class="table">
+                <tr>
+                    <th>Spell Ability</th>
+                    <th>Spell hit bonus</th>
+                    <th>Spell Save DC</th>
+                </tr>
+            </table>
+
+            <table id="spell-slot-table" class="table">
+                <tr>
+                    <th>Level</th>
+                    <th>1st</th>
+                    <th>2nd</th>
+                    <th>3rd</th>
+                    <th>4th</th>
+                    <th>5th</th>
+                    <th>6th</th>
+                    <th>7th</th>
+                    <th>8th</th>
+                    <th>9th</th>
+                </tr>
+                <tr>
+                    <th>Free</th>
+                    <td>0</td>
+                    <td>0</td>
+                    <td>0</td>
+                    <td>0</td>
+                    <td>0</td>
+                    <td>0</td>
+                    <td>0</td>
+                    <td>0</td>
+                    <td>0</td>
+                </tr>
+            </table>
+
+            <table id="spell-table" class="table">
+                <tr>
+                    <th>Spell</th>
+                    <th>Casting Time</th>
+                    <th>Range</th>
+                    <th>Components</th>
+                    <th>Duration</th>
+                </tr>
+            </table>
+            <button class="btn btn-secondary" id="add-spell-button">Add spell</button>
+        </div>
+
+    </div>
+
+</div>
+
+<div id="modals">
+
+    <!-- Modal for editing attributes -->
+    <div class="modal fade" id="stats-modal">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title"></h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body" style="text-align: center;">
+                    <select class="form-control" style="width: 100%; text-align: center">
+                        <option>0 (-5)</option>
+                        <option>1 (-5)</option>
+                        <option>2 (-4)</option>
+                        <option>3 (-4)</option>
+                        <option>4 (-3)</option>
+                        <option>5 (-3)</option>
+                        <option>6 (-2)</option>
+                        <option>7 (-2)</option>
+                        <option>8 (-1)</option>
+                        <option>9 (-1)</option>
+                        <option>10 (0)</option>
+                        <option>11 (0)</option>
+                        <option>12 (1)</option>
+                        <option>13 (1)</option>
+                        <option>14 (2)</option>
+                        <option>15 (2)</option>
+                        <option>16 (3)</option>
+                        <option>17 (3)</option>
+                        <option>18 (4)</option>
+                        <option>19 (4)</option>
+                        <option>20 (5)</option>
+                        <option>21 (5)</option>
+                        <option>22 (6)</option>
+                    </select>
+                    <span style="text-align: center"></span>
+                    <div class="custom-control custom-switch form-control">
+                        <input id="switch-is-savingthrow" class="custom-control-input" type="checkbox">
+                        <label for="switch-is-savingthrow" class="custom-control-label">Saving Throw</label>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for importing information -->
+    <div class="modal fade" id="import-modal">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title">Import String</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body" style="text-align: center;">
+                    <textarea id="import-string" class="form-control"></textarea>
+                    <button id="import-string-button" class="btn btn-success m-2">Importieren</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for exporting information -->
+    <div class="modal fade" id="export-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title">Export String</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body" style="text-align: center;">
+                    <textarea id="export-string" class="form-control"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for editing general information -->
+    <div class="modal fade" id="general-modal">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title">General information</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body" style="text-align: center;">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Name</span>
+                        </div>
+                        <input type="text" class="form-control" name="name">
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Level</span>
+                        </div>
+                        <select class="form-control" name="level">
+                            <option>1</option>
+                            <option>2</option>
+                            <option>3</option>
+                            <option>4</option>
+                            <option>5</option>
+                            <option>6</option>
+                            <option>7</option>
+                            <option>8</option>
+                            <option>9</option>
+                            <option>10</option>
+                            <option>11</option>
+                            <option>12</option>
+                            <option>13</option>
+                            <option>14</option>
+                            <option>15</option>
+                            <option>16</option>
+                            <option>17</option>
+                            <option>18</option>
+                            <option>19</option>
+                            <option>20</option>
+                        </select>
+                        <input class="form-control" name="experience">
+                        <div class="input-group-append">
+                            <span class="input-group-text">XP</span>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Class</span>
+                        </div>
+                        <input type="text" placeholder="Class" class="form-control" name="class">
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Race</span>
+                        </div>
+                        <input type="text" placeholder="Race" class="form-control" name="race">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for editing general information -->
+    <div class="modal fade" id="ability-modal">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title"></h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body" style="text-align: center;">
+                    <div class="custom-control custom-switch form-control">
+                        <input id="switch-is-proficient" class="custom-control-input" type="checkbox">
+                        <label for="switch-is-proficient" class="custom-control-label">Proficient</label>
+                    </div>
+                    <div class="custom-control custom-switch form-control">
+                        <input id="switch-is-expertise" class="custom-control-input" type="checkbox">
+                        <label for="switch-is-expertise" class="custom-control-label">Expertise</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for editing general information -->
+    <div class="modal fade" id="weapon-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title"></h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body" style="text-align: center;">
+                    <div class="alert-container"></div>
+
+                    <div class="input-group">
+                        <div class="input-group-prepend"><span class="input-group-text">Name</span></div>
+                        <input placeholder="Name" class="form-control" name="weapon-name">
+                        <select name="weapon-type" class="form-control">
+                            <option>melee</option>
+                            <option>ranged</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-group-prepend"><span class="input-group-text">Damage</span></div>
+                        <input name="weapon-dice-number" class="form-control" placeholder="Number">
+                        <select name="weapon-die-type" class="form-control">
+                            <option>d4</option>
+                            <option>d6</option>
+                            <option>d8</option>
+                            <option>d10</option>
+                            <option>d12</option>
+                            <option>d20</option>
+                        </select>
+                        <span class="input-group-text versatile-die" style="display: none"></span>
+                        <select name="weapon-damage-type" class="form-control">
+                            <option>bludgeoning</option>
+                            <option>piercing</option>
+                            <option>slashing</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="custom-control custom-switch form-control">
+                            <input id="weapon-is-proficient" class="custom-control-input" type="checkbox">
+                            <label for="weapon-is-proficient" class="custom-control-label">Proficient</label>
+                        </div>
+                        <div class="custom-control custom-switch form-control">
+                            <input id="weapon-is-thrown" class="custom-control-input" type="checkbox">
+                            <label for="weapon-is-thrown" class="custom-control-label">Thrown</label>
+                        </div>
+                        <div class="custom-control custom-switch form-control">
+                            <input id="weapon-is-loading" class="custom-control-input" type="checkbox">
+                            <label for="weapon-is-loading" class="custom-control-label">Loading</label>
+                        </div>
+                        <select class="form-control" name="weapon-hand">
+                            <option>Hand property</option>
+                            <option>Light</option>
+                            <option>Versatile</option>
+                            <option>Two-Handed</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group weapon-range">
+                        <div class="input-group-prepend"><span class="input-group-text">Range</span></div>
+                        <input class="form-control" placeholder="Short range" name="short-range">
+                        <div class="input-group-append"><span class="input-group-text">/</span></div>
+                        <input class="form-control" placeholder="Long range" name="long-range">
+                    </div>
+
+                    <div class="input-group weapon-melee-properties">
+                        <div class="custom-control custom-switch form-control">
+                            <input id="weapon-is-finesse" class="custom-control-input" type="checkbox">
+                            <label for="weapon-is-finesse" class="custom-control-label">Finesse</label>
+                        </div>
+                        <div class="custom-control custom-switch form-control" style="display: none;">
+                            <input id="weapon-is-heavy" class="custom-control-input" type="checkbox">
+                            <label for="weapon-is-heavy" class="custom-control-label">Heavy</label>
+                        </div>
+                        <div class="custom-control custom-switch form-control">
+                            <input id="weapon-is-reached" class="custom-control-input" type="checkbox">
+                            <label for="weapon-is-reached" class="custom-control-label">Reach</label>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-group-prepend"><span class="input-group-text">Hit Bonus</span></div>
+                        <input name="weapon-hit-bonus" class="form-control">
+                        <input name="weapon-damage-bonus" class="form-control">
+                        <div class="input-group-append"><span class="input-group-text">Damage Bonus</span></div>
+                    </div>
+
+                    <textarea class="form-control" rows="5" placeholder="Notes" name="notes"></textarea>
+
+                    <input name="index" class="hidden">
+
+                    <button id="create-new-weapon" class="btn btn-success mt-2">Add weapon</button>
+                    <button id="delete-weapon" class="btn btn-danger mt-2">Remove weapon</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div id="information-container" class="hidden">
+    {"general":{"name":"Laber Rhababer","experience":0,"race":"Cyber elf","class":"Fighter","level":1},"expertise":["acrobatics"],"stats":{"str":0,"dex":7,"con":10,"int":10,"wis":16,"cha":10},"weapons":[{"name":"Dolch","die":"d4","dieCount":1,"melee":true,"damageType":"piercing","notes":"","hitBonus":0,"damageBonus":0,"proficiency":true,"finesse":true,"heavy":false,"reach":false,"loading":false,"light":false,"versatile":false,"twoHanded":false,"thrown":true,"shortRange":20,"longRange":60}],"proficiency":["animal handling","acrobatics", "con"]}
+</div>
+
+</body>
+</html>

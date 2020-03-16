@@ -1,0 +1,5 @@
+# PyCharm files
+.idea
+
+# Files only used locally
+bootstrap.min.css

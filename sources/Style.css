@@ -1,0 +1,83 @@
+.not-selectable {
+    cursor: default;
+}
+
+.hidden {
+    display: none;
+}
+
+.row div {
+    padding-right: 10px;
+    padding-left: 10px;
+}
+
+input, select {
+    text-align: center;
+}
+
+#general-stats {
+    cursor: pointer;
+}
+
+#stat-table {
+    margin-bottom: 0;
+}
+
+#stat-table td, #stat-table th {
+    text-align: center;
+}
+
+#stat-table .row-stat:hover {
+    animation-name: greenish;
+    animation-duration: 0.5s;
+    animation-fill-mode: forwards;
+}
+
+#stat-table table td {
+    padding-top: 0;
+    padding-bottom: 0;
+    font-size: 80%;
+}
+
+#ability-table {
+    margin-bottom: 0;
+}
+
+#ability-table td {
+    text-align: center;
+    padding: 0.25rem;
+}
+
+#ability-table th {
+    text-align: center;
+}
+
+#ability-table tr:not(:first-child):hover {
+    animation-name: greenish;
+    animation-duration: 0.5s;
+    animation-fill-mode: forwards;
+}
+
+#weapon-table tr:not(:first-child):hover {
+    animation-name: greenish;
+    animation-duration: 0.5s;
+    animation-fill-mode: forwards;
+}
+
+.proficient-with {
+    font-weight: 600;
+}
+
+.expert-with {
+    font-weight: 800;
+}
+
+@keyframes greenish {
+    from {
+        background: white;
+    }
+
+    to {
+        background: #1e7e3480;
+    }
+}

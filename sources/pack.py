@@ -1,5 +1,6 @@
 import re
 import requests
+import subprocess
 
 
 def replacer(offline: bool, type):
@@ -24,6 +25,10 @@ def replacer(offline: bool, type):
     return inner
 
 
+# Run sbt for the current version
+subprocess.run("sbt fullOptJS", shell=True)
+
+# Load sheet
 with open("Sheet.html") as file:
     sheet_raw = file.read()
 

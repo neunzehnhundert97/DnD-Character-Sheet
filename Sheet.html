@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title></title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="bootstrap.min.css">
+    <style>
+        .not-selectable {
+            cursor: default;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #general-stats {
+            cursor: pointer;
+        }
+
+        #stat-table {
+            margin-bottom: 0;
+        }
+
+        #stat-table td, #stat-table th {
+            text-align: center;
+        }
+
+        #stat-table .row-stat:hover {
+            animation-name: greenish;
+            animation-duration: 0.5s;
+            animation-fill-mode: forwards;
+        }
+
+        #stat-table table td {
+            padding-top: 0;
+            padding-bottom: 0;
+            font-size: 80%;
+        }
+
+        #ability-table {
+            margin-bottom: 0;
+        }
+
+        #ability-table td {
+            text-align: center;
+            padding: 0.25rem;
+        }
+
+        #ability-table th {
+            text-align: center;
+        }
+
+        #ability-table tr:not(:first-child):hover {
+            animation-name: greenish;
+            animation-duration: 0.5s;
+            animation-fill-mode: forwards;
+        }
+
+        #weapon-table tr:not(:first-child):hover {
+            animation-name: greenish;
+            animation-duration: 0.5s;
+            animation-fill-mode: forwards;
+        }
+
+        @keyframes greenish {
+            from {
+                background: white;
+            }
+
+            to {
+                background: #1e7e3480;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+    <!-- General stats like name, class, etc -->
+    <span id="general-stats" class="navbar-brand not-selectable"></span>
+    <ul class="navbar-nav">
+        <li class="nav-item active">
+            <a class="nav-link" href="#">General</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#">Fight</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#">Shopping</a>
+        </li>
+    </ul>
+
+    <!-- Buttons --->
+    <div class="navbar-nav ml-auto">
+        <button id="button-import" class="nav-item btn btn-secondary mx-1" type="button">
+            Import
+        </button>
+        <button id="button-export" class="nav-item btn btn-primary mx-1" type="button">
+            Export
+        </button>
+        <button id="button-save" class="nav-item btn btn-success mx-1" type="button">
+            Save
+        </button>
+    </div>
+</nav>
+
+<div id="slider-common" class="container-fluid">
+    <div class="row">
+
+        <div class="col-lg-2">
+
+            <!-- Table with attributes -->
+            <table id="stat-table" class="table not-selectable">
+                <tr>
+                    <th>Stat</th>
+                    <th>Score</th>
+                    <th>Mod</th>
+                    <th>Save</th>
+                </tr>
+                <tr class="row-stat">
+                    <td>STR</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr class="row-stat">
+                    <td>DEX</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr class="row-stat">
+                    <td>CON</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr class="row-stat">
+                    <td>INT</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr class="row-stat">
+                    <td>WIS</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr class="row-stat">
+                    <td>CHA</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </table>
+
+        </div>
+
+        <div class="col-lg-2">
+
+            <!-- Table with abilities and proficiencies -->
+            <table id="ability-table" class="table not-selectable"></table>
+
+        </div>
+
+        <div class="col-lg-3" style="text-align: center">
+            <table id="weapon-table" class="table">
+
+            </table>
+            <button class="btn btn-secondary" id="add-weapon-button">Add weapon</button>
+        </div>
+
+    </div>
+
+</div>
+
+<div id="modals">
+
+    <!-- Modal for editing attributes -->
+    <div class="modal fade" id="stats-modal">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title"></h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body" style="text-align: center;">
+                    <select class="form-control" style="width: 100%; text-align: center">
+                        <option>0 (-5)</option>
+                        <option>1 (-5)</option>
+                        <option>2 (-4)</option>
+                        <option>3 (-4)</option>
+                        <option>4 (-3)</option>
+                        <option>5 (-3)</option>
+                        <option>6 (-2)</option>
+                        <option>7 (-2)</option>
+                        <option>8 (-1)</option>
+                        <option>9 (-1)</option>
+                        <option>10 (0)</option>
+                        <option>11 (0)</option>
+                        <option>12 (+1)</option>
+                        <option>13 (+1)</option>
+                        <option>14 (+2)</option>
+                        <option>15 (+2)</option>
+                        <option>16 (+3)</option>
+                        <option>17 (+3)</option>
+                        <option>18 (+4)</option>
+                        <option>19 (+4)</option>
+                        <option>20 (+5)</option>
+                        <option>21 (+5)</option>
+                        <option>22 (+6)</option>
+                    </select>
+                    <span style="text-align: center"></span>
+                    <div class="custom-control custom-switch form-control">
+                        <input id="switch-is-savingthrow" class="custom-control-input" type="checkbox">
+                        <label for="switch-is-savingthrow" class="custom-control-label">Saving Throw</label>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for importing information -->
+    <div class="modal fade" id="import-modal">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title">Import String</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body" style="text-align: center;">
+                    <textarea id="import-string" class="form-control"></textarea>
+                    <button id="import-string-button" class="btn btn-success m-2">Importieren</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for exporting information -->
+    <div class="modal fade" id="export-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title">Export String</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body" style="text-align: center;">
+                    <textarea id="export-string" class="form-control"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for editing general information -->
+    <div class="modal fade" id="general-modal">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title">General information</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body" style="text-align: center;">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Name</span>
+                        </div>
+                        <input type="text" class="form-control" name="name">
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Level</span>
+                        </div>
+                        <select class="form-control" name="level">
+                            <option>1</option>
+                            <option>2</option>
+                            <option>3</option>
+                            <option>4</option>
+                            <option>5</option>
+                            <option>6</option>
+                            <option>7</option>
+                            <option>8</option>
+                            <option>9</option>
+                            <option>10</option>
+                            <option>11</option>
+                            <option>12</option>
+                            <option>13</option>
+                            <option>14</option>
+                            <option>15</option>
+                            <option>16</option>
+                            <option>17</option>
+                            <option>18</option>
+                            <option>19</option>
+                            <option>20</option>
+                        </select>
+                        <input class="form-control" name="experience">
+                        <div class="input-group-append">
+                            <span class="input-group-text">XP</span>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Class</span>
+                        </div>
+                        <input type="text" placeholder="Class" class="form-control" name="class">
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Level</span>
+                        </div>
+                        <input type="text" placeholder="Race" class="form-control" name="race">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for editing general information -->
+    <div class="modal fade" id="ability-modal">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title"></h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body" style="text-align: center;">
+                    <div class="custom-control custom-switch form-control">
+                        <input id="switch-is-proficient" class="custom-control-input" type="checkbox">
+                        <label for="switch-is-proficient" class="custom-control-label">Proficient</label>
+                    </div>
+                    <div class="custom-control custom-switch form-control">
+                        <input id="switch-is-expertise" class="custom-control-input" type="checkbox">
+                        <label for="switch-is-expertise" class="custom-control-label">Expertise</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for editing general information -->
+    <div class="modal fade" id="weapon-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title"></h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body" style="text-align: center;">
+                    <div class="alert-container"></div>
+
+                    <div class="input-group">
+                        <div class="input-group-prepend"><span class="input-group-text">Name</span></div>
+                        <input placeholder="Name" class="form-control" name="weapon-name">
+                        <select name="weapon-type" class="form-control">
+                            <option>melee</option>
+                            <option>ranged</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-group-prepend"><span class="input-group-text">Damage</span></div>
+                        <input name="weapon-dice-number" class="form-control" placeholder="Number">
+                        <select name="weapon-die-type" class="form-control">
+                            <option>d4</option>
+                            <option>d6</option>
+                            <option>d8</option>
+                            <option>d10</option>
+                            <option>d12</option>
+                            <option>d20</option>
+                        </select>
+                        <span class="input-group-text versatile-die" style="display: none"></span>
+                        <select name="weapon-damage-type" class="form-control">
+                            <option>bludgeoning</option>
+                            <option>piercing</option>
+                            <option>slashing</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="custom-control custom-switch form-control">
+                            <input id="weapon-is-proficient" class="custom-control-input" type="checkbox">
+                            <label for="weapon-is-proficient" class="custom-control-label">Proficient</label>
+                        </div>
+                        <div class="custom-control custom-switch form-control">
+                            <input id="weapon-is-thrown" class="custom-control-input" type="checkbox">
+                            <label for="weapon-is-thrown" class="custom-control-label">Thrown</label>
+                        </div>
+                        <div class="custom-control custom-switch form-control">
+                            <input id="weapon-is-loading" class="custom-control-input" type="checkbox">
+                            <label for="weapon-is-loading" class="custom-control-label">Loading</label>
+                        </div>
+                        <select class="form-control" name="weapon-hand">
+                            <option>Hand property</option>
+                            <option>Light</option>
+                            <option>Versatile</option>
+                            <option>Two-Handed</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group weapon-range">
+                        <div class="input-group-prepend"><span class="input-group-text">Range</span></div>
+                        <input class="form-control" placeholder="Short range" name="short-range">
+                        <div class="input-group-append"><span class="input-group-text">/</span></div>
+                        <input class="form-control" placeholder="Long range" name="long-range">
+                    </div>
+
+                    <div class="input-group weapon-melee-properties">
+                        <div class="custom-control custom-switch form-control">
+                            <input id="weapon-is-finesse" class="custom-control-input" type="checkbox">
+                            <label for="weapon-is-finesse" class="custom-control-label">Finesse</label>
+                        </div>
+                        <div class="custom-control custom-switch form-control" style="display: none;">
+                            <input id="weapon-is-heavy" class="custom-control-input" type="checkbox">
+                            <label for="weapon-is-heavy" class="custom-control-label">Heavy</label>
+                        </div>
+                        <div class="custom-control custom-switch form-control">
+                            <input id="weapon-is-reached" class="custom-control-input" type="checkbox">
+                            <label for="weapon-is-reached" class="custom-control-label">Reach</label>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-group-prepend"><span class="input-group-text">Hit Bonus</span></div>
+                        <input name="weapon-hit-bonus" class="form-control">
+                        <input name="weapon-damage-bonus" class="form-control">
+                        <div class="input-group-append"><span class="input-group-text">Damage Bonus</span></div>
+                    </div>
+
+                    <textarea class="form-control" rows="5" placeholder="Notes" name="notes"></textarea>
+
+                    <input name="index" class="hidden">
+
+                    <button id="create-new-weapon" class="btn btn-success mt-2">Add weapon</button>
+                    <button id="delete-weapon" class="btn btn-danger mt-2">Remove weapon</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div id="information-container" class="hidden"></div>
+
+<script>
+    "use strict";
+
+    let abilityMapping = {
+        "Acrobatics": "dex",
+        "Animal Handling": "wis",
+        "Arcana": "int",
+        "Athletics": "str",
+        "Deception": "cha",
+        "History": "int",
+        "Insight": "wis",
+        "Intimidation": "cha",
+        "Investigation": "int",
+        "Medicine": "wis",
+        "Nature": "int",
+        "Perception": "wis",
+        "Performance": "cha",
+        "Persuasion": "cha",
+        "Religion": "int",
+        "Sleight of Hand": "dex",
+        "Stealth": "dex",
+        "Survival": "wis",
+    };
+
+    let levelMapping = {
+        1: [0, 2],
+        2: [300, 2],
+        3: [900, 2],
+        4: [2700, 2],
+        5: [6500, 3],
+        6: [14000, 3],
+        7: [23000, 3],
+        8: [34000, 3],
+        9: [48000, 4],
+        10: [64000, 4],
+        11: [85000, 4],
+        12: [100000, 4],
+        13: [120000, 5],
+        14: [140000, 5],
+        15: [165000, 5],
+        16: [195000, 5],
+        17: [225000, 6],
+        18: [265000, 6],
+        19: [305000, 6],
+        20: [355000, 6],
+    };
+
+    let dice = ["d4", "d6", "d8", "d10", "d12", "d20"];
+
+    // Define default information
+    let information = null;
+
+    // Load information object from file
+    let embeddedInfo = $("#information-container").text();
+    if (embeddedInfo.length > 10)
+        try
+        {
+            information = JSON.parse(embeddedInfo);
+        } catch (e)
+        {
+            console.log("Cannot parse embedded information, use default one instead")
+        }
+
+    if (information === null)
+        information = {
+            general: {name: "Name", level: 1, class: "Fighter", race: "Cyber elf", experience: 0},
+            stats: {str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10},
+            proficiency: {},
+            expertise: {},
+            weapons: [],
+        };
+
+    // Apply the default information
+    loadInformation();
+
+    function raceHandler()
+    {
+        information.general.race = $(this).val();
+    }
+
+    // Define ready function
+    $(document).ready(function ()
+    {
+        // Define click handler for attributes
+        $("#stat-table .row-stat").click(attributeHandler);
+
+        // Click handler for import button
+        $("#button-import").click(function ()
+        {
+            $("#import-modal").modal();
+        });
+
+        $("#stat-table th:first-child").click(showStatTable);
+
+        $("#stat-table th:not(:first-child)").contextmenu(hideStatColumn);
+
+        $("#stat-table tr:not(:first-child) td:first-child").contextmenu(hideStatRow);
+
+        // Click handler for the import functionality
+        $("#import-string-button").click(importHandler);
+
+        // Click handler for export functionality
+        $("#button-export").click(exportHandler);
+
+        // Save handler
+        $("#button-save").click(saveHandler);
+
+        // Set click handler for general information
+        $("#general-stats").click(function ()
+        {
+            $("#general-modal input[name=name]").val(information.general.name);
+            $("#general-modal select[name=level]").val(information.general.level);
+            $("#general-modal input[name=experience]").val(information.general.experience);
+            $("#general-modal input[name=class]").val(information.general.class);
+            $("#general-modal input[name=race]").val(information.general.race);
+            $("#general-modal").modal();
+        });
+
+        // Click handler for elements in general modal
+        $("#general-modal input[name=name]").change(nameHandler);
+        $("#general-modal select[name=level]").change(levelHandler);
+        $("#general-modal input[name=experience]").change(experienceHandler);
+        $("#general-modal input[name=class]").change(classHandler);
+        $("#general-modal input[name=race]").change(raceHandler);
+
+        // Handler for weapons
+        $("#add-weapon-button").click(addWeaponHandler);
+        $("#create-new-weapon").click(createNewWeaponHandler);
+        $("#delete-weapon").click(removeWeapon);
+        $("#weapon-modal [name=weapon-hand]").change(weaponHandHandler);
+        $("#weapon-modal [name=weapon-type]").change(weaponTypeHandler);
+        $("#weapon-is-thrown").change(weaponThrownHandler);
+        $("#weapon-modal [name=weapon-die-type]").change(() => $("#weapon-modal [name=weapon-hand]").change());
+    });
+
+    function showStatTable()
+    {
+        $("#stat-table *").show();
+    }
+
+    function hideStatColumn(e)
+    {
+        e.preventDefault();
+
+        // Get index of header
+        let index = 0;
+        let child = this;
+        while ((child = child.previousSibling) != null)
+            if (child.tagName === "TH")
+                index++;
+
+        $("#stat-table tr *:nth-child(" + (index + 1) + ")").hide();
+    }
+
+    function hideStatRow(e)
+    {
+        e.preventDefault();
+        $(this).parent().hide();
+    }
+
+    function loadInformation()
+    {
+        // Create a change handler
+        let infoHandler = {
+            // A changed attribute will always dump the current information
+            set: function (obj, prop, value)
+            {
+                // Set value
+                obj[prop] = value;
+
+                // Update information in file
+                $("#information-container").text(JSON.stringify(information));
+
+                // Look for updates in need
+                if (Object.keys(information.stats).includes(prop))
+                {
+                    updateAbilities();
+                    updateWeaponList();
+                }
+
+                if (Object.keys(information.general).includes(prop))
+                {
+                    $("#general-stats").text(`${information.general.name}, ${information.general.level} Level ${information.general.class} (${information.general.race})`);
+                    updateWeaponList();
+                    updateAbilities();
+                }
+
+
+                if (Object.keys(information.proficiency).includes(prop))
+                {
+                    updateAbilities();
+                }
+
+                return true;
+            }
+        };
+
+        // Apply the change handler to each sub-object in information
+        for (let sub in information)
+            if (information.hasOwnProperty(sub))
+                information[sub] = new Proxy(information[sub], infoHandler);
+
+        // Apply the handler to information itself
+        information = new Proxy(information, infoHandler);
+        $("#information-container").text(JSON.stringify(information));
+
+        // Load header information
+        document.title = "D&D Sheet - " + information.general.name;
+        $("#general-stats").text(`${information.general.name}, ${information.general.level} Level ${information.general.class} (${information.general.race})`);
+
+        // Load attributes
+        $("#stat-table tr.row-stat").each(function ()
+        {
+            let attribute = $(this).children().eq(0).text().toLowerCase();
+            let stat = information.stats[attribute];
+            let mod = statToModifier(information.stats[attribute]);
+            let save = mod;
+
+            if (information.proficiency["attribute"])
+                save += information.general.proficiency;
+
+            if (mod > 0)
+                mod = "+" + mod;
+
+            if (save > 0)
+                save = "+" + save;
+
+            // Update table
+            $(this).children().eq(1).text(stat);
+            $(this).children().eq(2).text(mod);
+            $(this).children().eq(3).text(save);
+
+        });
+
+        // Load abilities and proficiencies
+        updateAbilities();
+        updateWeaponList();
+    }
+
+    function updateAbilities()
+    {
+        let table = $("#ability-table");
+
+        let rows = "<tr><th>Ability</th><th>Mod</th></tr>";
+
+        Object.keys(abilityMapping).sort().forEach(function (key)
+        {
+            // Load stat modifier
+            let stat = statToModifier(information.stats[abilityMapping[key]]);
+
+            // Add proficiency
+            if (information.proficiency.hasOwnProperty(key) && information.proficiency[key])
+                if (information.expertise.hasOwnProperty(key) && information.expertise[key])
+                    stat += levelMapping[information.general.level][1] * 2;
+                else
+                    stat += levelMapping[information.general.level][1];
+
+            // Add add sign
+            if (stat > 0)
+                stat = "+" + stat;
+
+            // Add row
+            rows += `<tr><td>${key}</td><td>${stat}</td></tr>`;
+        });
+
+        // Insert generated elements
+        table.html(rows);
+
+        table.find("tr:not(:first-child)").click(statHandler)
+    }
+
+    function statHandler()
+    {
+        let target = $(this);
+        let modal = $("#ability-modal");
+        let profSwitch = modal.find("#switch-is-proficient");
+        let expSwitch = modal.find("#switch-is-expertise");
+        let ability = target.children().eq(0).text();
+
+        // Set up switches
+        if (information.proficiency.hasOwnProperty(ability) && information.proficiency[ability])
+        {
+            profSwitch.prop("checked", true);
+            expSwitch.parent().show();
+
+            expSwitch.prop("checked", information.expertise.hasOwnProperty(ability) && information.expertise[ability]);
+
+        } else
+        {
+            profSwitch.prop("checked", false);
+            expSwitch.parent().hide();
+        }
+
+        // Set modal title to the selected ability
+        modal.find(".modal-title").text(ability);
+
+        // Change handler for proficiency switch
+        profSwitch.off()
+            .change(function ()
+            {
+                let checked = $(this).prop("checked");
+
+                if (checked)
+                {
+                    // Show expertise switch
+                    expSwitch.prop("checked", false)
+                        .parent().show();
+                } else
+                {
+                    // Apply implied effects to expertise
+                    expSwitch.prop("checked", false)
+                        .parent().hide();
+                    information.expertise[ability] = false;
+                }
+
+                // Set value in information object
+                information.proficiency[ability] = checked;
+
+                // Update table
+                updateAbilities();
+            });
+
+        // Change handler for expertise switch
+        expSwitch.off()
+            .change(function ()
+            {
+                // Set value in information object
+                information.expertise[ability] = $(this).prop("checked");
+
+                // Update table
+                updateAbilities();
+            });
+
+        // Open modal
+        modal.modal();
+    }
+
+    // Handling the import button
+    function importHandler()
+    {
+        let input = $("#import-string").val();
+        let info;
+
+        try
+        {
+            info = JSON.parse(input);
+        } catch (e)
+        {
+            alert("Input malformed!");
+            return;
+        }
+
+        $("#import-modal").modal("hide");
+        information = info;
+        loadInformation();
+    }
+
+    function exportHandler()
+    {
+        // Set export string
+        $("#export-string").text($("#information-container").text());
+
+        // Display modal
+        $("#export-modal").modal();
+
+        // Select all text after short delay
+        setTimeout('$("#export-string")[0].focus();$("#export-string")[0].select();', 200);
+    }
+
+    function attributeHandler(e)
+    {
+        // Get clicked row and values
+        let target = $(e.currentTarget);
+        let attribute = target.children().eq(0).text();
+        let value = target.children().eq(1).text();
+        let modifier = statToModifier(value);
+
+        if (modifier > 0)
+            modifier = "+" + modifier;
+
+        // Set modal title
+        $("#stats-modal .modal-title").text("Change " + attribute);
+
+        // Set new change handler for the select element, remove old ones, and set it to the current value
+        $("#stats-modal select")
+            .off()
+            .val(value + " (" + modifier + ")")
+            .change(function ()
+            {
+                // Get selected values
+                let values = $(this).val().split(" (");
+
+                let mod = parseInt(values[1].replace(")", ""));
+
+                let save = mod;
+
+                if (information.proficiency[attribute])
+                    save += information.general.proficiency;
+
+                // Write values into table and information object
+                information.stats[attribute.toLowerCase()] = values[0];
+                target.children().eq(1).text(values[0]);
+                target.children().eq(2).text(mod);
+                target.children().eq(3).text(save);
+
+                $("#stats-modal").modal("hide");
+            });
+
+        $("#stats-modal input")
+            .off()
+            .prop("checked", information.proficiency.hasOwnProperty(attribute.toLowerCase()) && information.proficiency[attribute.toLowerCase()])
+            .change(function ()
+            {
+                // Update proficiency
+                information.proficiency[attribute.toLowerCase()] = $(this).prop("checked");
+            });
+
+        $("#stats-modal").modal();
+    }
+
+    function classHandler()
+    {
+        information.general.class = $(this).val();
+    }
+
+    function experienceHandler()
+    {
+        let xp = parseInt($(this).val());
+
+        // Unparseable inputs are set to 0
+        if (isNaN(xp))
+            xp = 0;
+
+        // Find matching level
+        let level = 1;
+        for (; level < 20; ++level)
+            if (levelMapping[level + 1][0] > xp)
+                break;
+
+        // Set xp and level
+        information.general.experience = xp;
+        information.general.level = level;
+
+        // Update shown information
+        $("#general-modal select[name=level]").val(level);
+    }
+
+    function levelHandler()
+    {
+        let level = parseInt($(this).val());
+
+        // Update information object
+        information.general.level = level;
+        information.general.experience = levelMapping[level][0];
+
+        // Update shown information
+        $("#general-modal input[name=experience]").val(levelMapping[level][0]);
+    }
+
+    function nameHandler()
+    {
+        information.general.name = $(this).val();
+        document.title = "D&D Sheet - " + information.general.name;
+    }
+
+    function saveHandler()
+    {
+        // Generate file content out of the document
+        let content = "data:plain/attachment," + encodeURIComponent(document.documentElement.innerHTML);
+
+        // Create a element with download
+        let element = document.createElement("a");
+        element.href = content;
+        element.download = information.general.name + " - Sheet.html";
+        element.style.display = "none";
+
+        // Insert it, click it, and remove it
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+    }
+
+    function addWeaponHandler()
+    {
+        $("#weapon-modal .modal-title").text("New weapon");
+        $("#weapon-modal input").val("");
+        $("#weapon-modal [name=weapon-type]").val("melee");
+        $("#weapon-modal select[name=weapon-hand]").val("Hand property").change();
+        $("#weapon-modal select[name=weapon-die-type]").val("d6");
+        $("#weapon-modal [type=checkbox]").prop("checked", false);
+        $("#weapon-is-loading").parent().hide();
+        $("#create-new-weapon").text("Add weapon");
+        $("#delete-weapon").hide();
+        $("#weapon-modal div.weapon-range").hide();
+        $("#weapon-modal").modal();
+    }
+
+    function createNewWeaponHandler()
+    {
+        let name = $("#weapon-modal [name=weapon-name]").val();
+        let type = $("#weapon-modal [name=weapon-type]").val();
+        let count = parseInt($("#weapon-modal [name=weapon-dice-number]").val());
+        let die = $("#weapon-modal [name=weapon-die-type]").val();
+        let hitBonus = parseInt($("#weapon-modal [name=weapon-hit-bonus]").val());
+        let damageBonus = parseInt($("#weapon-modal [name=weapon-damage-bonus]").val());
+        let damageType = $("#weapon-modal [name=weapon-damage-type]").val();
+        let index = $("#weapon-modal [name=index]").val();
+
+        // Check for name
+        if (name.length === 0)
+        {
+            $("#weapon-modal .alert-container").html("<div class=\"alert alert-danger alert-dismissible fade show\">\n" +
+                "<button type=\"button\" class=\"close\" data-dismiss=\"alert\">&times;</button>\n" +
+                "<span>The weapon needs to have a name.</span></div>");
+            return;
+        }
+
+        // Check for damage
+        if (isNaN(count))
+        {
+            $("#weapon-modal .alert-container").html("<div class=\"alert alert-danger alert-dismissible fade show\">\n" +
+                "<button type=\"button\" class=\"close\" data-dismiss=\"alert\">&times;</button>\n" +
+                "<span>Count missing or not a number</span></div>");
+            return;
+        }
+
+        let weapon = {
+            name: name,
+            die: die,
+            dieCount: count,
+            type: type,
+            damageType: damageType,
+            notes: $("#weapon-modal [name=notes]").val(),
+            hitBonus: isNaN(hitBonus) ? 0 : hitBonus,
+            damageBonus: isNaN(damageBonus) ? 0 : damageBonus,
+            proficiency: $("#weapon-is-proficient").prop("checked"),
+            finesse: $("#weapon-is-finesse").prop("checked"),
+            heavy: $("#weapon-is-heavy").prop("checked"),
+            reach: $("#weapon-is-reached").prop("checked"),
+            loading: $("#weapon-is-loading").prop("checked"),
+            light: $("#weapon-modal [name=weapon-hand]").val() === "Light",
+            versatile: $("#weapon-modal [name=weapon-hand]").val() === "Versatile",
+            twoHanded: $("#weapon-modal [name=weapon-hand]").val() === "Two-Handed",
+            thrown: $("#weapon-is-thrown").prop("checked"),
+            shortRange: $("#weapon-modal [name=short-range]").val(),
+            longRange: $("#weapon-modal [name=long-range]").val()
+        };
+
+        if (index === "")
+            information.weapons.push(weapon);
+        else
+            information.weapons[parseInt(index)] = weapon;
+
+        updateWeaponList();
+        $("#weapon-modal").modal("hide");
+    }
+
+    function removeWeapon()
+    {
+        let index = $("#weapon-modal [name=index]").val();
+        information.weapons.splice(parseInt(index), 1);
+        updateWeaponList();
+        $("#weapon-modal").modal("hide");
+    }
+
+    function updateWeaponList()
+    {
+        let table = $("#weapon-table");
+        table.html("<tr><th>Weapon</th><th>range</th><th>to hit</th><th>damage</th></tr>");
+
+        information.weapons.forEach(function (weapon, index)
+        {
+            let damage = weapon.damageBonus;
+            let toHit = weapon.hitBonus;
+
+            // Apply proficiency
+            if (weapon.proficiency)
+                toHit += levelMapping[information.general.level][1];
+
+            // Compute modifier
+            let mod = 0;
+            if (weapon.type === "melee" && (!weapon.finesse || information.stats.str > information.stats.dex))
+            {
+                mod = statToModifier(information.stats.str);
+            } else
+            {
+                mod = statToModifier(information.stats.dex);
+            }
+
+            damage += mod;
+            toHit += mod;
+
+            let count = weapon.dieCount > 1 ? weapon.dieCount : "";
+
+            // Prepare dis play damage
+            if (damage > 0)
+                damage = " + " + damage;
+            else if (damage < 0)
+                damage = " - " + damage;
+            else
+                damage = "";
+
+
+            damage = `${count}${weapon.die}${weapon.versatile ? "/" + dice[dice.indexOf(weapon.die) + 1] : ""}${damage}`;
+
+            let range = "-";
+
+            if (weapon.type === "ranged" || weapon.thrown)
+                range = `${weapon.shortRange} / ${weapon.longRange}`;
+
+            table.append(`<tr class="not-selectable" data-index="${index}"><td>${weapon.name}</td><td>${range}</td><td>${toHit}</td><td>${damage}</td></tr>`);
+        });
+
+        table.find("tr:not(:first-child)").click(weaponHandler)
+    }
+
+    function weaponTypeHandler()
+    {
+        if ($(this).val() === "melee")
+        {
+            $("#weapon-modal div.weapon-range").hide();
+            $("#weapon-is-thrown").parent().show();
+            $("#weapon-is-reached").parent().show();
+            $("#weapon-is-loading").parent().hide();
+            $("#weapon-modal select[name=weapon-hand] option:eq(2)").show();
+        } else
+        {
+            $("#weapon-modal div.weapon-range").show();
+            $("#weapon-is-thrown").parent().hide();
+            $("#weapon-is-reached").parent().hide();
+            $("#weapon-is-loading").parent().show();
+            $("#weapon-modal select[name=weapon-hand] option:eq(2)").hide();
+        }
+    }
+
+    function weaponThrownHandler()
+    {
+        if ($(this).prop("checked"))
+            $("#weapon-modal div.weapon-range").show();
+        else
+            $("#weapon-modal div.weapon-range").hide();
+    }
+
+    function weaponHandHandler()
+    {
+        switch ($(this).val())
+        {
+            case "Light":
+                $("#weapon-is-heavy").prop("checked", false).parent().hide();
+                $("#weapon-is-finesse").parent().show();
+                $("#weapon-modal .versatile-die").hide();
+                break;
+            case "Versatile":
+                $("#weapon-is-heavy").prop("checked", false).parent().hide();
+                $("#weapon-is-finesse").prop("checked", false).parent().hide();
+                $("#weapon-modal .versatile-die").show().text("/ " + (dice[dice.indexOf($("#weapon-modal [name=weapon-die-type]").val()) + 1]));
+                break;
+            case "Two-Handed":
+                $("#weapon-is-heavy").parent().show();
+                $("#weapon-is-finesse").prop("checked", false).parent().hide();
+                $("#weapon-modal .versatile-die").hide();
+                break;
+            default:
+                $("#weapon-is-heavy").prop("checked", false).parent().hide();
+                $("#weapon-is-finesse").parent().show();
+                $("#weapon-modal .versatile-die").hide();
+        }
+    }
+
+    function weaponHandler(e)
+    {
+        e.preventDefault();
+
+        let weapon = information.weapons[$(this).attr("data-index")];
+
+        $("#weapon-modal .modal-title").text("Modify weapon");
+
+        // Insert information
+        $("#weapon-modal [name=weapon-name]").val(weapon.name);
+        $("#weapon-modal [name=weapon-type]").val(weapon.type);
+        $("#weapon-modal [name=weapon-dice-number]").val(weapon.dieCount);
+        $("#weapon-modal [name=weapon-die-type]").val(weapon.die);
+        $("#weapon-modal [name=weapon-damage-type]").val(weapon.damageType);
+        $("#weapon-modal [name=notes]").val(weapon.notes);
+        $("#weapon-modal #weapon-is-proficient").prop("checked", weapon.proficiency);
+        $("#weapon-modal #weapon-is-reached").prop("checked", weapon.reach);
+        if (weapon.light)
+        {
+            $("#weapon-modal [name=weapon-hand]").val("Light");
+            $("#weapon-modal #weapon-is-finesse").prop("checked", weapon.finesse);
+        } else if (weapon.versatile)
+        {
+            $("#weapon-modal [name=weapon-hand]").val("Versatile");
+        } else if (weapon.twoHanded)
+        {
+            $("#weapon-modal [name=weapon-hand]").val("Two-Handed");
+            $("#weapon-modal #weapon-is-heavy").prop("checked", weapon.heavy);
+        } else
+            $("#weapon-modal [name=weapon-hand]").val("Hand property");
+
+        $("#weapon-modal [name=weapon-hit-bonus]").val(weapon.hitBonus);
+        $("#weapon-modal [name=weapon-damage-bonus]").val(weapon.damageBonus);
+        $("#weapon-modal [name=index]").val($(this).attr("data-index"));
+        $("#create-new-weapon").text("Modify weapon");
+        $("#delete-weapon").show();
+
+        if (weapon.type === "melee")
+        {
+            $("#weapon-modal div.weapon-range").hide();
+            $("#weapon-is-thrown").parent().show();
+            $("#weapon-is-reached").parent().show();
+            $("#weapon-is-loading").parent().hide();
+            $("#weapon-modal select[name=weapon-hand] option:eq(2)").show();
+        } else
+        {
+            $("#weapon-modal div.weapon-range").show();
+            $("#weapon-is-thrown").parent().hide();
+            $("#weapon-is-reached").parent().hide();
+            $("#weapon-is-loading").parent().show();
+            $("#weapon-modal select[name=weapon-hand] option:eq(2)").hide();
+        }
+
+        if (weapon.thrown)
+            $("#weapon-modal div.weapon-range").show();
+
+        $("#weapon-modal").modal();
+    }
+
+    // Convert an attribute into a modifier
+    function statToModifier(stat)
+    {
+        return Math.floor((parseInt(stat) - 10) / 2);
+    }
+</script>
+
+</body>
+</html>

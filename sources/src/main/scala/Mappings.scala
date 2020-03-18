@@ -45,4 +45,13 @@ object Mappings
         19 -> (305000, 6),
         20 -> (355000, 6),
     )
+
+    /** A mapping for each currency's value in cp. */
+    val currencies: Map[String, Int] = Map(
+        "cp" -> 1,
+        "sp" -> 10,
+        "ep" -> 50,
+        "gp" -> 100,
+        "pp" -> 200
+    )
 }

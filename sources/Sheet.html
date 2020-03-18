@@ -14,32 +14,36 @@
 <body>
 
 <!-- Navbar -->
-<nav class="navbar navbar-expand-sm bg-dark navbar-dark">
-    <!-- General stats like name, class, etc -->
-    <span id="general-stats" class="navbar-brand not-selectable"></span>
-    <ul class="navbar-nav">
-        <li class="nav-item active">
-            <a class="nav-link" href="#">General</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="#">Fight</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="#">Shopping</a>
-        </li>
-    </ul>
-
-    <!-- Buttons --->
-    <div class="navbar-nav ml-auto">
-        <button id="button-import" class="nav-item btn btn-secondary mx-1" type="button">
-            Import
-        </button>
-        <button id="button-export" class="nav-item btn btn-primary mx-1" type="button">
-            Export
-        </button>
-        <button id="button-save" class="nav-item btn btn-success mx-1" type="button">
-            Save
-        </button>
+<nav class="navbar navbar-expand-md navbar-dark bg-dark">
+    <div class="navbar-collapse collapse w-100 order-1 order-md-0 dual-collapse2">
+        <span id="general-stats" class="navbar-brand not-selectable"></span>
+    </div>
+    <div class="mx-auto order-0">
+        <ul class="navbar-nav">
+            <li class="nav-item active">
+                <a class="nav-link" href="#">General</a>
+            </li>
+            <li class="nav-item hidden">
+                <a class="nav-link" href="#">Fight</a>
+            </li>
+            <li class="nav-item hidden">
+                <a class="nav-link" href="#">Shopping</a>
+            </li>
+        </ul>
+    </div>
+    <div class="navbar-collapse collapse w-100 order-3 dual-collapse2">
+        <!-- Buttons --->
+        <div class="navbar-nav ml-auto">
+            <button id="button-import" class="nav-item btn btn-secondary mx-1" type="button">
+                Import
+            </button>
+            <button id="button-export" class="nav-item btn btn-primary mx-1" type="button">
+                Export
+            </button>
+            <button id="button-save" class="nav-item btn btn-success mx-1" type="button">
+                Save
+            </button>
+        </div>
     </div>
 </nav>
 
@@ -49,7 +53,7 @@
         <div class="col-lg">
 
             <!-- Table with attributes -->
-            <table id="stat-table" class="table not-selectable">
+            <table id="attribute-table" class="table not-selectable">
                 <tr>
                     <th>Stat</th>
                     <th>Score</th>
@@ -93,7 +97,7 @@
                     <td></td>
                 </tr>
             </table>
-
+            
         </div>
 
         <div class="col-lg">
@@ -101,7 +105,7 @@
             <!-- Table with abilities and proficiencies -->
             <table id="ability-table" class="table not-selectable"></table>
 
-            <input id="ability-search" class="form-control mt-1" placeholder="Search">
+            <input id="ability-search" class="form-control mx-1" placeholder="Search">
 
         </div>
 
@@ -109,10 +113,21 @@
             <table id="weapon-table" class="table">
 
             </table>
+            <input id="weapon-search" class="form-control m-1 hidden" placeholder="Search">
             <button class="btn btn-secondary" id="add-weapon-button">Add weapon</button>
         </div>
 
-        <div class="col-xl-5" style="text-align: center">
+        <div class="col-xl-3" style="text-align: center">
+
+            <div id="inventory-container" style="overflow-y: scroll;">
+
+            </div>
+            <input id="inventory-search" class="form-control m-1 hidden" placeholder="Search">
+            <button class="btn btn-secondary" id="add-item-button">Add item</button>
+
+        </div>
+
+        <div class="col-xl-5" style="text-align: center; display: none">
             <table id="caster-table" class="table">
                 <tr>
                     <th>Spell Ability</th>
@@ -167,7 +182,7 @@
 <div id="modals">
 
     <!-- Modal for editing attributes -->
-    <div class="modal fade" id="stats-modal">
+    <div class="modal fade" id="attribute-modal">
         <div class="modal-dialog modal-sm">
             <div class="modal-content">
 
@@ -325,7 +340,7 @@
         </div>
     </div>
 
-    <!-- Modal for editing general information -->
+    <!-- Modal for setting proficiency and expertise for abilities -->
     <div class="modal fade" id="ability-modal">
         <div class="modal-dialog modal-sm">
             <div class="modal-content">
@@ -351,7 +366,7 @@
         </div>
     </div>
 
-    <!-- Modal for editing general information -->
+    <!-- Modal for creating and editing weapons -->
     <div class="modal fade" id="weapon-modal">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -450,6 +465,56 @@
 
                     <button id="create-new-weapon" class="btn btn-success mt-2">Add weapon</button>
                     <button id="delete-weapon" class="btn btn-danger mt-2">Remove weapon</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for creating and editing items -->
+    <div class="modal fade" id="item-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title"></h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body" style="text-align: center;">
+                    <div class="alert-container"></div>
+
+                    <form id="item-form">
+                        <div class="input-group">
+                            <div class="input-group-prepend"><span class="input-group-text">Name</span></div>
+                            <input class="form-control" name="name" placeholder="Name">
+                            <input class="form-control" name="amount" placeholder="Amount">
+                            <div class="input-group-prepend"><span class="input-group-text">Amount</span></div>
+                        </div>
+
+                        <div class="input-group">
+                            <div class="input-group-prepend"><span class="input-group-text">Price</span></div>
+                            <input class="form-control" placeholder="Price" name="price">
+                            <select class="form-control" name="priceUnit">
+                                <option>cp</option>
+                                <option>sp</option>
+                                <option>ep</option>
+                                <option>gp</option>
+                                <option>pp</option>
+                            </select>
+                            <input class="form-control" placeholder="Weight" name="weight">
+                            <div class="input-group-prepend"><span class="input-group-text">lb.</span></div>
+                            <div class="input-group-prepend"><span class="input-group-text">Weight</span></div>
+                        </div>
+
+                        <textarea class="form-control" rows="5" placeholder="Notes" name="notes"></textarea>
+
+                        <input name="index" class="hidden">
+
+                        <button id="create-new-item" class="btn btn-success mt-2" type="button">Add item</button>
+                        <button id="delete-item" class="btn btn-danger mt-2" type="button">Remove item</button>
+                    </form>
                 </div>
             </div>
         </div>

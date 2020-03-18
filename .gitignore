@@ -3,3 +3,7 @@
 
 # Files only used locally
 bootstrap.min.css
+Old.js
+
+# sbt files
+target

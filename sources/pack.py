@@ -26,6 +26,7 @@ def replacer(offline: bool, type):
 
 
 # Run sbt for the current version
+print("Running sbt")
 subprocess.run("sbt fullOptJS", shell=True)
 
 # Load sheet

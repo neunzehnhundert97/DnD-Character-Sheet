@@ -1,11 +1,12 @@
 import io.udash.wrappers.jquery._
-import org.scalajs.dom._
+import org.scalajs.dom.{Element, Event, document, window}
 import scalatags.JsDom.all._
 import JQBootstrapped.jq2modalized
-import org.scalajs.dom.raw.HTMLTextAreaElement
+import org.scalajs.dom.raw.{HTMLFormElement, HTMLTextAreaElement, WheelEvent}
 import GlobalScope.encodeURIComponent
+import org.scalajs.dom
 
-import scala.scalajs.js
+import Ordering.Double.TotalOrdering
 
 object Main
 {
@@ -14,6 +15,7 @@ object Main
     var info: MainInformation = _
 
     var abilitySortbyName: Boolean = true
+    var inventorySortByColumn: Int = 0
 
     /** Entry point */
     def main(args: Array[String]): Unit =
@@ -31,15 +33,16 @@ object Main
         updateAttributes()
         updateAbilities()
         updateWeaponList()
+        updateInventory()
 
         // Show a warning when trying to reload the page
-        window.addEventListener("beforeunload", (e: js.Dynamic) =>
+        /*window.addEventListener("beforeunload", (e: js.Dynamic) =>
         {
             e.preventDefault()
-        })
+        })*/
 
         // Define click handler for attributes
-        jQ("#stat-table .row-stat").on(EventName.click, attributeHandler)
+        jQ("#attribute-table .row-stat").on(EventName.click, attributeHandler)
 
         // Define click handler for buttons
         jQ("#button-import").on(EventName.click, openImportModal)
@@ -60,18 +63,27 @@ object Main
         // Handler for weapons
         jQ("#add-weapon-button").on(EventName.click, openNewWeaponModal)
         jQ("#create-new-weapon").on(EventName.click, createNewWeaponHandler)
-        //jQ("#delete-weapon").on(EventName.click, removeWeapon)
+        jQ("#delete-weapon").on(EventName.click, removeWeapon)
         jQ("#weapon-modal [name=weapon-hand]").on(EventName.change, weaponHandHandler)
         jQ("#weapon-modal [name=weapon-type]").on(EventName.change, weaponTypeHandler)
         jQ("#weapon-is-thrown").on(EventName.change, weaponThrownHandler)
         jQ("#weapon-modal [name=weapon-die-type]").on(EventName.change, (_, _) => jQ("#weapon-modal [name=weapon-hand]").trigger(EventName.change))
+
+        jQ("#add-item-button").on(EventName.click, openNewItemModal)
+        jQ("#create-new-item").on(EventName.click, createupdateItem)
+        jQ("#delete-item").on(EventName.click, removeItem)
+
+        // Register search handlers
+        jQ("#ability-search").on(EventName.keyUp, abilitySearch).value("")
+        jQ("#weapon-search").on(EventName.keyUp, weaponSearch).value("")
+        jQ("#inventory-search").on(EventName.keyUp, inventorySearch).value("")
     }
 
     /** Loads information embedded in the documents or the default. */
-    def initializeInformation(): Unit =
+    private def initializeInformation(): Unit =
     {
         // Load embedded JSON string from HTML
-        val embeddedInfo = jQ("#information-container").text()
+        val embeddedInfo = jQ("#information-container").text().replace("\n", "")
         var loadSuccessful = false
 
         // Try to process it if existing
@@ -103,12 +115,12 @@ object Main
     {
         // Load header information
         document.title = "D&D Sheet - " + info.name
-        jQ("#general-stats").text(s"${info.name}, ${info.level} Level ${info.`class`} (${info.race})")
+        jQ("#general-stats").text(s"${info.name}, ${info.level} Level ${info.cls} (${info.race})")
     }
 
     /** Updates the attributes and saving throws. */
     def updateAttributes(): Unit =
-        jQ("#stat-table tr.row-stat").each((elem, index) =>
+        jQ("#attribute-table tr.row-stat").each((elem, index) =>
         {
             val stat: Int = info.score(index)
             val mod: Int = statToModifier(stat)
@@ -141,7 +153,7 @@ object Main
         })
 
         // Generate html
-        val rows = tr(th("Ability"), th("Mod")) ::
+        val rows = tr(th(s"${if (abilitySortbyName) "⮚" else ""}Ability"), th(s"${if (!abilitySortbyName) "⮚" else ""}Mod")) ::
             (if (abilitySortbyName) data.sortBy(_._1) else data.sortBy(_._2).reverse).map(t =>
             {
                 tr(td(cls := (if (t._3) if (t._4) "expert-with" else "proficient-with" else ""))(t._1), td(t._2))
@@ -153,7 +165,6 @@ object Main
             .find("tr:not(:first-child)").on(EventName.click, abilityHandler)
 
         // Add event handler for sorting
-        jQ("#ability-search").on(EventName.keyUp, abilitySearch).value("")
         jQ("#ability-table th:eq(0)").on(EventName.click, (_, _) =>
         {
             abilitySortbyName = true
@@ -208,8 +219,65 @@ object Main
         }).toList
 
         table.html(contents.map(_.toString).mkString(""))
-        table.find("tr:not(:first-child)").on(EventName.click, weaponHandler)
+            .find("tr:not(:first-child)").on(EventName.click, weaponHandler)
+
+        // Show the search bar when there are at least 4 items
+        if (info.weapons.length > 3)
+            jQ("#weapon-search").show()
+        else
+            jQ("#weapon-search").hide()
     }
+
+    def updateInventory(): Unit =
+    {
+        val inventory = (inventorySortByColumn match
+        {
+            case 1 => info.inventory.sortBy(i => i.price * Mappings.currencies(i.priceUnit)).reverse
+            case 2 => info.inventory.sortBy(_.weight).reverse
+            case _ => info.inventory.sortBy(_.name)
+        }).toList
+
+        // Generate table
+        jQ("#inventory-container").html(
+            table(id := "inventory-table", cls := "table")(
+                tr(
+                    th(s"${if (inventorySortByColumn == 0) "⮚" else ""}Item"),
+                    th(s"${if (inventorySortByColumn == 1) "⮚" else ""}Price"),
+                    th(s"${if (inventorySortByColumn == 2) "⮚" else ""}Weight")
+                ),
+                for ((item, index) <- inventory.zipWithIndex)
+                    yield tr(data.index := index)(
+                        td(s"${item.amount} ${item.name}"),
+                        td(if (item.price != 0) s"${item.price} ${item.priceUnit}" else "-"),
+                        td(if (item.weight != 0) item.weight else "-")
+                    ),
+            ).render
+        ).find("tr:not(:first-child)").on(EventName.click, modifyItem)
+
+        // Add event handler for sorting
+        jQ("#inventory-table th:eq(0)").on(EventName.click, (_, _) =>
+        {
+            inventorySortByColumn = 0
+            updateInventory()
+        })
+        jQ("#inventory-table th:eq(1)").on(EventName.click, (_, _) =>
+        {
+            inventorySortByColumn = 1
+            updateInventory()
+        })
+        jQ("#inventory-table th:eq(2)").on(EventName.click, (_, _) =>
+        {
+            inventorySortByColumn = 2
+            updateInventory()
+        })
+
+        // Show the search bar when there are at least 4 items
+        if (info.inventory.length > 3)
+            jQ("#inventory-search").show()
+        else
+            jQ("#inventory-search").hide()
+    }
+
 
     /** Shows a modal on clicking on any attribute. */
     private def attributeHandler(elem: Element, event: JQueryEvent): Unit =
@@ -221,20 +289,20 @@ object Main
         val modifier: Int = statToModifier(value)
 
         // Set modal title
-        jQ("#stats-modal .modal-title").text("Change " + attribute)
+        jQ("#attribute-modal .modal-title").text("Change " + attribute)
 
         // Set new change handler for the select element, remove old ones, and set it to the current value
-        jQ("#stats-modal select")
+        jQ("#attribute-modal select")
             .off()
             .value(s"$value ($modifier" + ")")
             .on(EventName.change, attributeScoreHandler(attribute, target))
 
-        jQ("#stats-modal input")
+        jQ("#attribute-modal input")
             .off()
             .prop("checked", info.isProficient(attribute))
             .on(EventName.change, attributeProficiencyHandler(attribute))
 
-        jQ("#stats-modal").modal("show")
+        jQ("#attribute-modal").modal("show")
     }
 
     /** Handles a change attribute score. */
@@ -245,12 +313,12 @@ object Main
         val score = values(0).trim.toInt
 
         // Write values into table and info object
-        info.score(attribute, score)
+        info.score(attribute) = score
 
         updateAttributes()
         updateAbilities()
 
-        jQ("#stats-modal").modal("hide")
+        jQ("#attribute-modal").modal("hide")
     }
 
     /** Handles a changed proficiency for a ability. */
@@ -270,7 +338,41 @@ object Main
         jQ("#ability-table tr").show()
         if (!term.isEmpty)
         {
-            jQ("#ability-table tr:not(:first-child)").each((elem, index) =>
+            jQ("#ability-table tr:not(:first-child)").each((elem, _) =>
+            {
+                val that = jQ(elem)
+                if (!that.children().at(0).text().toLowerCase.contains(term))
+                    that.hide()
+            })
+        }
+    }
+
+    /** Shows and hides weapons depending on the entered search term. */
+    private def weaponSearch(elem: Element, event: JQueryEvent): Unit =
+    {
+        val term = jQ(elem).value().asInstanceOf[String].toLowerCase
+
+        jQ("#weapon-table tr").show()
+        if (!term.isEmpty)
+        {
+            jQ("#weapon-table tr:not(:first-child)").each((elem, _) =>
+            {
+                val that = jQ(elem)
+                if (!that.children().at(0).text().toLowerCase.contains(term))
+                    that.hide()
+            })
+        }
+    }
+
+    /** Shows and hides items in the inventory depending on the entered search term. */
+    private def inventorySearch(elem: Element, event: JQueryEvent): Unit =
+    {
+        val term = jQ(elem).value().asInstanceOf[String].toLowerCase
+
+        jQ("#inventory-table tr").show()
+        if (!term.isEmpty)
+        {
+            jQ("#inventory-table tr:not(:first-child)").each((elem, _) =>
             {
                 val that = jQ(elem)
                 if (!that.children().at(0).text().toLowerCase.contains(term))
@@ -350,7 +452,7 @@ object Main
 
     /** Handles a changed class. */
     private def classHandler(elem: Element, event: JQueryEvent): Unit =
-        info.`class` = jQ(elem).value().asInstanceOf[String]
+        info.cls = jQ(elem).value().asInstanceOf[String]
 
     /** Handles changed experience. */
     private def experienceHandler(elem: Element, event: JQueryEvent): Unit =
@@ -453,9 +555,7 @@ object Main
         // Check for name
         if (name.length == 0)
         {
-            jQ("#weapon-modal .alert-container").html("<div class=\"alert alert-danger alert-dismissible fade show\">\n" +
-                "<button type=\"button\" class=\"close\" data-dismiss=\"alert\">&times;</button>\n" +
-                "<span>The weapon needs to have a name.</span></div>")
+            showAlert("#weapon-modal .alert-container", "The weapon needs to have a name")
             return
         }
 
@@ -465,9 +565,7 @@ object Main
             case Some(value) =>
                 value
             case None =>
-                jQ("#weapon-modal .alert-container").html("<div class=\"alert alert-danger alert-dismissible fade show\">\n" +
-                    "<button type=\"button\" class=\"close\" data-dismiss=\"alert\">&times;</button>\n" +
-                    "<span>Count missing or not a number</span></div>")
+                showAlert("#weapon-modal .alert-container", "Count missing or not a number")
                 return
         }
 
@@ -504,6 +602,15 @@ object Main
 
         updateWeaponList()
         jQ("#weapon-modal").modal("hide")
+    }
+
+    /** Removes the weapon currently opened in the modal. */
+    private def removeWeapon(elem: Element, event: JQueryEvent): Unit =
+    {
+        val index = jQ("#weapon-modal [name=index]").value().asInstanceOf[String].toInt
+        info.removeWeapon(index)
+        jQ("#weapon-modal").modal("hide")
+        updateWeaponList()
     }
 
     /** Opens the weapon modal to edit an existing one. */
@@ -564,7 +671,73 @@ object Main
         if (weapon.thrown)
             jQ("#weapon-modal div.weapon-range").show()
 
+        jQ("#weapon-modal .alert").remove()
         jQ("#weapon-modal").modal("show")
+    }
+
+    /** */
+    private def createupdateItem(elem: Element, event: JQueryEvent): Unit =
+    {
+        val formData = new FormData(document.getElementById("item-form").asInstanceOf[HTMLFormElement])
+        val name = formData.get("name")
+
+        if (name.isEmpty)
+        {
+            showAlert("#item-modal .alert-container", "Name is missing")
+            return
+        }
+
+        val item = new Item(name, formData.get("amount"), formData.get("price").toIntOption.getOrElse(0), formData.get("priceUnit"), formData.get("weight").toDoubleOption.getOrElse(0), formData.get("notes"))
+
+        formData.get("index").toIntOption match
+        {
+            case Some(index) => info.replaceItem(index, item)
+            case None => info.addItem(item)
+        }
+
+        jQ("#item-modal").modal("hide")
+        updateInventory()
+    }
+
+    /** */
+    private def modifyItem(elem: Element, event: JQueryEvent): Unit =
+    {
+        val index = jQ(elem).attr("data-index").flatMap(_.toIntOption).get
+        val item = info.item(index)
+
+        jQ("#item-modal [name=name]").value(item.name)
+        jQ("#item-modal [name=price]").value(item.price)
+        jQ("#item-modal [name=priceUnit]").value(item.priceUnit)
+        jQ("#item-modal [name=weight]").value(item.weight)
+        jQ("#item-modal [name=amount]").value(item.amount)
+        jQ("#item-modal [name=notes]").value(item.notes)
+        jQ("#item-modal [name=index]").value(index)
+        jQ("#item-modal .alert").remove()
+        jQ("#item-modal #create-new-item").text("Modify item")
+        jQ("#item-modal").modal("show")
+    }
+
+    /** Removes the item currently opened in the modal. */
+    private def removeItem(elem: Element, event: JQueryEvent): Unit =
+    {
+        val index = jQ("#item-modal [name=index]").value().asInstanceOf[String].toInt
+        info.removeItem(index)
+        jQ("#item-modal").modal("hide")
+        updateInventory()
+    }
+
+    private def healthPointsHandler(event: WheelEvent): Unit =
+    {
+        event.preventDefault()
+
+        val elem = jQ(event.currentTarget)
+        val hp = elem.text().split(": ")(1).split(" / ")(0).toInt
+
+        // Decide whether the wheel went up or down
+        if (event.deltaY < 0 && hp < info.maxHP)
+            elem.text(s"HP: ${hp + 1} / ${info.maxHP}")
+        else if (event.deltaY > 0 && hp > 0)
+            elem.text(s"HP: ${hp - 1} / ${info.maxHP}")
     }
 
     /** Open the import modal. */
@@ -587,6 +760,7 @@ object Main
             updateAttributes()
             updateAbilities()
             updateWeaponList()
+            updateInventory()
         } catch
         {
             case _: Throwable =>
@@ -617,8 +791,9 @@ object Main
         jQ("#general-modal input[name=name]").value(info.name)
         jQ("#general-modal select[name=level]").value(info.level)
         jQ("#general-modal input[name=experience]").value(info.experience)
-        jQ("#general-modal input[name=class]").value(info.`class`)
+        jQ("#general-modal input[name=class]").value(info.cls)
         jQ("#general-modal input[name=race]").value(info.race)
+        jQ("#item-modal #create-new-item").text("Create item")
         jQ("#general-modal").modal("show")
     }
 
@@ -636,12 +811,24 @@ object Main
         jQ("#weapon-modal [name=notes]").value("")
         jQ("#delete-weapon").hide()
         jQ("#weapon-modal div.weapon-range").hide()
+        jQ("#weapon-modal .alert").remove()
         jQ("#weapon-modal").modal("show")
+    }
+
+    private def openNewItemModal(elem: Element, event: JQueryEvent): Unit =
+    {
+        jQ("#item-modal .modal-title").text("New item")
+        jQ("#item-modal input").value("")
+        jQ("#item-modal .alert").remove()
+        jQ("#item-modal").modal("show")
     }
 
     /** Shows a save dialog. */
     private def saveHandler(elem: Element, event: JQueryEvent): Unit =
     {
+        // Write information into file
+        jQ("#information-container").text(info.toJSON)
+
         // Generate file content out of the document
         val content = "data:plain/attachment," + encodeURIComponent(document.documentElement.innerHTML)
 
@@ -653,6 +840,12 @@ object Main
         element.click()
         document.body.removeChild(element)
     }
+
+    private def showAlert(selector: Selector, msg: String): Unit =
+        jQ(selector).html(div(cls := "alert alert-danger alert-dismissible fade show")(
+            button(`type` := "button", cls := "close", data.dismiss := "alert")(raw("&times")),
+            span(msg)
+        ).render)
 
     /** Convert an attribute into a modifier. */
     def statToModifier(stat: Int): Int =

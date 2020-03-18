@@ -5,10 +5,8 @@ import scala.scalajs.js
 import js.JSConverters._
 import scala.scalajs.js.{Dictionary, JSON, |}
 
-sealed trait Information
-
 class MainInformation(_general: General = new General(),
-                      _stats: MutableMap[String, Int] = MutableMap(
+                      attributes: MutableMap[String, Int] = MutableMap(
                           "str" -> 10,
                           "dex" -> 10,
                           "con" -> 10,
@@ -16,9 +14,17 @@ class MainInformation(_general: General = new General(),
                           "wis" -> 10,
                           "cha" -> 10
                       ),
+                      status: MutableMap[String, Int] = MutableMap(
+                          "maxHP" -> 6,
+                          "currentHP" -> 6,
+                          "tempHP" -> 0,
+                          "ac" -> 10,
+                          "hitDice" -> 1
+                      ),
                       proficiency: MutableSet[String] = MutableSet(),
                       expertise: MutableSet[String] = MutableSet(),
-                      _weapons: ListBuffer[Weapon] = ListBuffer()) extends Information
+                      _weapons: ListBuffer[Weapon] = ListBuffer(),
+                      val inventory: ListBuffer[Item] = ListBuffer())
 {
 
     def isProficient(ability: String): Boolean =
@@ -62,10 +68,10 @@ class MainInformation(_general: General = new General(),
     def race_=(s: String): Unit =
         _general.race = s
 
-    def `class`: String =
+    def cls: String =
         _general.`class`
 
-    def class_=(s: String): Unit =
+    def cls_=(s: String): Unit =
         _general.`class` = s
 
     def level: Int =
@@ -85,23 +91,11 @@ class MainInformation(_general: General = new General(),
     def experience_=(i: Int): Unit =
         _general.experience = i
 
+    def maxHP: Int =
+        status("maxHP")
 
-    def score(attribute: String | Int): Int = attribute.asInstanceOf[Any] match
-    {
-        case s: String => _stats(s.toLowerCase.substring(0, 3))
-        case i: Int => _stats.toList(i)._2
-    }
-
-    def score(attribute: String, value: Int): Unit =
-    {
-        attribute.asInstanceOf[Any] match
-        {
-            case s: String => _stats(s.toLowerCase.substring(0, 3)) = value
-            case i: Int => _stats(_stats.toList(i)._1) = value
-        }
-        updateAbilities()
-        updateWeaponList()
-    }
+    def currentHP: Int =
+        status("currentHP")
 
     def weapon(index: Int): Weapon =
         _weapons(index)
@@ -115,15 +109,53 @@ class MainInformation(_general: General = new General(),
     def replaceWeapon(index: Int, weapon: Weapon): Unit =
         _weapons(index) = weapon
 
+    def removeWeapon(index: Int): Unit =
+        _weapons.remove(index)
+
+    def item(index: Int): Item =
+        inventory(index)
+
+    def addItem(item: Item): Unit =
+        inventory += item
+
+    def replaceItem(index: Int, item: Item): Unit =
+        inventory(index) = item
+
+    def removeItem(index: Int): Unit =
+        inventory.remove(index)
+
     /** Returns the saved information as JSON string to be saved or exported. */
     def toJSON: String =
         JSON.stringify(MutableMap(
-            "general" -> _general.toJSON,
-            "stats" -> _stats.toJSDictionary,
+            "general" -> _general,
+            "attributes" -> attributes.toJSDictionary,
+            "status" -> status.toJSDictionary,
             "proficiency" -> proficiency.toJSArray,
             "expertise" -> expertise.toJSArray,
-            "weapons" -> _weapons.toJSArray
+            "weapons" -> _weapons.toJSArray,
+            "inventory" -> inventory.toJSArray
         ).toJSDictionary)
+
+    object score
+    {
+        def apply(attribute: String | Int): Int = attribute.asInstanceOf[Any] match
+        {
+            case s: String => attributes(s.toLowerCase.substring(0, 3))
+            case i: Int => attributes.toList(i)._2
+        }
+
+        def update(attribute: String, value: Int): Unit =
+        {
+            attribute.asInstanceOf[Any] match
+            {
+                case s: String => attributes(s.toLowerCase.substring(0, 3)) = value
+                case i: Int => attributes(attributes.toList(i)._1) = value
+            }
+            updateAbilities()
+            updateWeaponList()
+        }
+    }
+
 }
 
 object MainInformation
@@ -132,11 +164,13 @@ object MainInformation
     {
         val data = JSON.parse(json).asInstanceOf[Dictionary[Any]]
         new MainInformation(
-            General.fromJSON(data("general").asInstanceOf[Dictionary[Any]]),
-            data("stats").asInstanceOf[Dictionary[Int]],
+            data("general").asInstanceOf[General],
+            data("attributes").asInstanceOf[Dictionary[Int]],
+            data("status").asInstanceOf[Dictionary[Int]],
             data("proficiency").asInstanceOf[js.Array[String]].to(MutableSet),
             data("expertise").asInstanceOf[js.Array[String]].to(MutableSet),
-            data("weapons").asInstanceOf[js.Array[Weapon]].to(ListBuffer)
+            data("weapons").asInstanceOf[js.Array[Weapon]].to(ListBuffer),
+            data("inventory").asInstanceOf[js.Array[Item]].to(ListBuffer)
         )
     }
 }
@@ -145,47 +179,31 @@ class General(var name: String = "Name",
               var `class`: String = "Fighter",
               var race: String = "Cyber Elf",
               var level: Int = 1,
-              var experience: Int = 0) extends Information
-{
-    /** Returns the saved information as JSON string to be saved or exported. */
-    def toJSON: js.Dictionary[Any] =
-        MutableMap(
-            "name" -> name,
-            "level" -> level,
-            "class" -> `class`,
-            "race" -> race,
-            "experience" -> experience
-        ).toJSDictionary
-}
+              var experience: Int = 0) extends js.Object
 
-object General
-{
-    def fromJSON(json: Dictionary[Any]): General =
-        new General(
-            json("name").asInstanceOf[String],
-            json("class").asInstanceOf[String],
-            json("race").asInstanceOf[String],
-            json("level").asInstanceOf[Int],
-            json("experience").asInstanceOf[Int]
-        )
-}
+class Weapon(val name: String,
+             val die: String,
+             val dieCount: Int,
+             val melee: Boolean,
+             val damageType: String,
+             val notes: String,
+             val hitBonus: Int,
+             val damageBonus: Int,
+             val proficiency: Boolean,
+             val finesse: Boolean,
+             val heavy: Boolean,
+             val reach: Boolean,
+             val loading: Boolean,
+             val light: Boolean,
+             val versatile: Boolean,
+             val twoHanded: Boolean,
+             val thrown: Boolean,
+             val shortRange: Int,
+             val longRange: Int) extends js.Object
 
-class Weapon(var name: String,
-             var die: String,
-             var dieCount: Int,
-             var melee: Boolean,
-             var damageType: String,
-             var notes: String,
-             var hitBonus: Int,
-             var damageBonus: Int,
-             var proficiency: Boolean,
-             var finesse: Boolean,
-             var heavy: Boolean,
-             var reach: Boolean,
-             var loading: Boolean,
-             var light: Boolean,
-             var versatile: Boolean,
-             var twoHanded: Boolean,
-             var thrown: Boolean,
-             var shortRange: Int,
-             var longRange: Int) extends js.Object
+class Item(val name: String,
+           val amount: String,
+           val price: Int,
+           val priceUnit: String,
+           val weight: Double,
+           val notes: String) extends js.Object

@@ -19,21 +19,21 @@ input, select {
     cursor: pointer;
 }
 
-#stat-table {
+#attribute-table {
     margin-bottom: 0;
 }
 
-#stat-table td, #stat-table th {
+#attribute-table td, #attribute-table th {
     text-align: center;
 }
 
-#stat-table .row-stat:hover {
+#attribute-table .row-stat:hover {
     animation-name: greenish;
     animation-duration: 0.5s;
     animation-fill-mode: forwards;
 }
 
-#stat-table table td {
+#attribute-table table td {
     padding-top: 0;
     padding-bottom: 0;
     font-size: 80%;
@@ -62,6 +62,16 @@ input, select {
     animation-name: greenish;
     animation-duration: 0.5s;
     animation-fill-mode: forwards;
+}
+
+#inventory-table tr:not(:first-child):hover {
+    animation-name: greenish;
+    animation-duration: 0.5s;
+    animation-fill-mode: forwards;
+}
+
+#status-table th, #status-table td {
+    text-align: center;
 }
 
 .proficient-with {

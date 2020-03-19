@@ -112,14 +112,17 @@ class MainInformation(_general: General = new General(),
     def removeWeapon(index: Int): Unit =
         _weapons.remove(index)
 
-    def item(index: Int): Item =
-        inventory(index)
+    def item(hash: Int): Item =
+        inventory.find(_.## == hash).get
 
     def addItem(item: Item): Unit =
         inventory += item
 
     def replaceItem(index: Int, item: Item): Unit =
         inventory(index) = item
+
+    def replaceItemByHash(hash: Int, item: Item): Unit =
+        inventory(inventory.find(_.## == hash).map(i => inventory.indexOf(i)).get) = item
 
     def removeItem(index: Int): Unit =
         inventory.remove(index)

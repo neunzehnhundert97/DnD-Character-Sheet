@@ -4,7 +4,6 @@ import scalatags.JsDom.all._
 import JQBootstrapped.jq2modalized
 import org.scalajs.dom.raw.{HTMLFormElement, HTMLTextAreaElement, WheelEvent}
 import GlobalScope.encodeURIComponent
-import org.scalajs.dom
 
 import Ordering.Double.TotalOrdering
 
@@ -207,7 +206,7 @@ object Main
                 if (weapon.versatile) "/" + dice(dice.indexOf(weapon.die) + 1) else ""
             } ${
                 if (damage != 0)
-                    damage
+                    f"$damage%+d"
                 else
                     ""
             }"
@@ -247,7 +246,7 @@ object Main
                     th(s"${if (inventorySortByColumn == 2) "⮚" else ""}Weight")
                 ),
                 for ((item, index) <- inventory.zipWithIndex)
-                    yield tr(data.index := index)(
+                    yield tr(data.index := index, data.hash := item.##)(
                         td(s"${item.amount} ${item.name}"),
                         td(if (item.price != 0) s"${item.price} ${item.priceUnit}" else "-"),
                         td(if (item.weight != 0) item.weight else "-")
@@ -691,7 +690,7 @@ object Main
 
         formData.get("index").toIntOption match
         {
-            case Some(index) => info.replaceItem(index, item)
+            case Some(index) => info.replaceItemByHash(index, item)
             case None => info.addItem(item)
         }
 
@@ -702,8 +701,8 @@ object Main
     /** */
     private def modifyItem(elem: Element, event: JQueryEvent): Unit =
     {
-        val index = jQ(elem).attr("data-index").flatMap(_.toIntOption).get
-        val item = info.item(index)
+        val hash = jQ(elem).attr("data-hash").flatMap(_.toIntOption).get
+        val item = info.item(hash)
 
         jQ("#item-modal [name=name]").value(item.name)
         jQ("#item-modal [name=price]").value(item.price)
@@ -711,7 +710,7 @@ object Main
         jQ("#item-modal [name=weight]").value(item.weight)
         jQ("#item-modal [name=amount]").value(item.amount)
         jQ("#item-modal [name=notes]").value(item.notes)
-        jQ("#item-modal [name=index]").value(index)
+        jQ("#item-modal [name=index]").value(hash)
         jQ("#item-modal .alert").remove()
         jQ("#item-modal #create-new-item").text("Modify item")
         jQ("#item-modal").modal("show")
@@ -819,6 +818,7 @@ object Main
     {
         jQ("#item-modal .modal-title").text("New item")
         jQ("#item-modal input").value("")
+        jQ("#item-modal textarea").value("")
         jQ("#item-modal .alert").remove()
         jQ("#item-modal").modal("show")
     }

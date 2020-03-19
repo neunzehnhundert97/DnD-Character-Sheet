@@ -122,7 +122,8 @@ object Main
     def updateAttributes(): Unit =
         jQ("#attribute-table tr.row-stat").each((elem, index) =>
         {
-            val stat: Int = info.score(index)
+            val attribute = jQ(elem).find("td:first-child").text()
+            val stat: Int = info.score(attribute)
             val mod: Int = statToModifier(stat)
             val save: Int = if (info.isProficient(jQ(elem).children().at(0).text()))
                 mod + info.proficiencyBonus
@@ -277,7 +278,6 @@ object Main
         else
             jQ("#inventory-search").hide()
     }
-
 
     /** Shows a modal on clicking on any attribute. */
     private def attributeHandler(elem: Element, event: JQueryEvent): Unit =

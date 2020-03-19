@@ -149,7 +149,6 @@ class MainInformation(_general: General = new General(),
             attribute.asInstanceOf[Any] match
             {
                 case s: String => attributes(s.toLowerCase.substring(0, 3)) = value
-                case i: Int => attributes(attributes.toList(i)._1) = value
             }
             updateAbilities()
             updateWeaponList()

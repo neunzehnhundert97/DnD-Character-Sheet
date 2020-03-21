@@ -1,11 +1,12 @@
 import io.udash.wrappers.jquery._
-import org.scalajs.dom.{Element, Event, document, window}
+import org.scalajs.dom.{Element, document, window}
 import scalatags.JsDom.all._
 import JQBootstrapped.jq2modalized
 import org.scalajs.dom.raw.{HTMLFormElement, HTMLTextAreaElement, WheelEvent}
 import GlobalScope.encodeURIComponent
 
 import Ordering.Double.TotalOrdering
+import scala.scalajs.js
 
 object Main
 {
@@ -24,7 +25,7 @@ object Main
         jQ(() => onReady())
     }
 
-    /** Ready function to be executed when the docment is loaded. Loads config, binds handlers and displays character information. */
+    /** Ready function to be executed when the document is loaded. Loads config, binds handlers and displays character information. */
     def onReady(): Unit =
     {
         initializeInformation()
@@ -35,10 +36,10 @@ object Main
         updateInventory()
 
         // Show a warning when trying to reload the page
-        /*window.addEventListener("beforeunload", (e: js.Dynamic) =>
+        window.addEventListener("beforeunload", (e: js.Dynamic) =>
         {
             e.preventDefault()
-        })*/
+        })
 
         // Define click handler for attributes
         jQ("#attribute-table .row-stat").on(EventName.click, attributeHandler)
@@ -119,7 +120,7 @@ object Main
 
     /** Updates the attributes and saving throws. */
     def updateAttributes(): Unit =
-        jQ("#attribute-table tr.row-stat").each((elem, index) =>
+        jQ("#attribute-table tr.row-stat").each((elem, _) =>
         {
             val attribute = jQ(elem).find("td:first-child").text()
             val stat: Int = info.score(attribute)
@@ -153,14 +154,19 @@ object Main
         })
 
         // Generate html
-        val rows = tr(th(s"${if (abilitySortbyName) "⮚" else ""}Ability"), th(s"${if (!abilitySortbyName) "⮚" else ""}Mod")) ::
-            (if (abilitySortbyName) data.sortBy(_._1) else data.sortBy(_._2).reverse).map(t =>
-            {
-                tr(td(cls := (if (t._3) if (t._4) "expert-with" else "proficient-with" else ""))(t._1), td(t._2))
-            })
-
-        // Insert generated elements
-        jQ("#ability-table").html(rows.toString)
+        jQ("#ability-container").html(
+            table(id := "ability-table", cls := "table")(
+                tr(
+                    th(s"${if (abilitySortbyName) "⮚" else ""}Ability"),
+                    th(s"${if (!abilitySortbyName) "⮚" else ""}Mod")
+                ),
+                for ((key, mod, prof, exp) <- if (abilitySortbyName) data.sortBy(_._1) else data.sortBy(_._2).reverse)
+                    yield tr(
+                        td(cls := (if (prof) if (exp) "expert-with" else "proficient-with" else ""))(key),
+                        td(mod)
+                    )
+            ).render
+        )
             // Add event handlers
             .find("tr:not(:first-child)").on(EventName.click, abilityHandler)
 
@@ -180,9 +186,7 @@ object Main
     /** Updates the list of weapons. */
     def updateWeaponList(): Unit =
     {
-        val table = jQ("#weapon-table")
-
-        val contents = tr(th("Weapon"), th("range"), th("to hit"), th("damage")) :: info.weapons.zipWithIndex.iterator.map(t =>
+        val contents = info.weapons.zipWithIndex.iterator.map(t =>
         {
             val (weapon, index) = t
 
@@ -218,8 +222,12 @@ object Main
             tr(cls := "not-selectable", data.index := index)(td(weapon.name), td(range), td(toHit), td(damageString))
         }).toList
 
-        table.html(contents.map(_.toString).mkString(""))
-            .find("tr:not(:first-child)").on(EventName.click, weaponHandler)
+        jQ("#weapon-container").html(
+            table(id := "weapon-table", cls := "table")(
+                tr(th("Weapon"), th("range"), th("to hit"), th("damage")),
+                contents
+            ).render
+        ).find("tr:not(:first-child)").on(EventName.click, weaponHandler)
 
         // Show the search bar when there are at least 4 items
         if (info.weapons.length > 3)
@@ -248,8 +256,8 @@ object Main
                 for ((item, index) <- inventory.zipWithIndex)
                     yield tr(data.index := index, data.hash := item.##)(
                         td(s"${item.amount} ${item.name}"),
-                        td(if (item.price != 0) s"${item.price} ${item.priceUnit}" else "-"),
-                        td(if (item.weight != 0) item.weight else "-")
+                        td(if (item.price != 0) s"${item.amount.toIntOption.getOrElse(1) * item.price} ${item.priceUnit}" else "-"),
+                        td(if (item.weight != 0) item.amount.toIntOption.getOrElse(1) * item.weight else "-")
                     ),
             ).render
         ).find("tr:not(:first-child)").on(EventName.click, modifyItem)
@@ -451,7 +459,10 @@ object Main
 
     /** Handles a changed class. */
     private def classHandler(elem: Element, event: JQueryEvent): Unit =
+    {
         info.cls = jQ(elem).value().asInstanceOf[String]
+        updateTitle()
+    }
 
     /** Handles changed experience. */
     private def experienceHandler(elem: Element, event: JQueryEvent): Unit =
@@ -467,6 +478,7 @@ object Main
 
         // Update shown info
         jQ("#general-modal select[name=level]").value(level)
+        updateTitle()
     }
 
     /** Handles a changed level. */
@@ -480,6 +492,7 @@ object Main
 
         // Update shown info
         jQ("#general-modal input[name=experience]").value(Mappings.levels(level)._1)
+        updateTitle()
     }
 
     /** Handles a changed name. */
@@ -498,14 +511,19 @@ object Main
 
     /** Handles a changed weapon type and hides or display elements accordingly. */
     private def weaponTypeHandler(elem: Element, event: JQueryEvent): Unit =
-        if (jQ(elem).value().asInstanceOf[String] == "melee")
+        changeWeaponModalMeleeOrRange(jQ(elem).value().asInstanceOf[String] == "melee")
+
+    /** */
+    private def changeWeaponModalMeleeOrRange(melee: Boolean): Unit =
+        if (melee)
         {
             jQ("#weapon-modal div.weapon-range").hide()
             jQ("#weapon-is-thrown").parent().show()
             jQ("#weapon-is-reached").parent().show()
             jQ("#weapon-is-loading").parent().hide()
             jQ("#weapon-modal select[name=weapon-hand] option:eq(2)").show()
-        } else
+        }
+        else
         {
             jQ("#weapon-modal div.weapon-range").show()
             jQ("#weapon-is-thrown").parent().hide()
@@ -646,26 +664,14 @@ object Main
 
         jQ("#weapon-modal [name=weapon-hit-bonus]").value(weapon.hitBonus)
         jQ("#weapon-modal [name=weapon-damage-bonus]").value(weapon.damageBonus)
+        jQ("#weapon-modal [name=weapon-short-range]").value(weapon.shortRange)
+        jQ("#weapon-modal [name=weapon-long-range]").value(weapon.longRange)
         jQ("#weapon-modal [name=index]").value(jQ(elem).attr("data-index").get.toInt)
         jQ("#create-new-weapon").text("Modify weapon")
         jQ("#delete-weapon").show()
 
-        if (weapon.melee)
-        {
-            jQ("#weapon-modal div.weapon-range").hide()
-            jQ("#weapon-is-thrown").parent().show()
-            jQ("#weapon-is-reached").parent().show()
-            jQ("#weapon-is-loading").parent().hide()
-            jQ("#weapon-modal select[name=weapon-hand] option:eq(2)").show()
-        }
-        else
-        {
-            jQ("#weapon-modal div.weapon-range").show()
-            jQ("#weapon-is-thrown").parent().hide()
-            jQ("#weapon-is-reached").parent().hide()
-            jQ("#weapon-is-loading").parent().show()
-            jQ("#weapon-modal select[name=weapon-hand] option:eq(2)").hide()
-        }
+        // Hide or show fields
+        changeWeaponModalMeleeOrRange(weapon.melee)
 
         if (weapon.thrown)
             jQ("#weapon-modal div.weapon-range").show()
@@ -688,9 +694,9 @@ object Main
 
         val item = new Item(name, formData.get("amount"), formData.get("price").toIntOption.getOrElse(0), formData.get("priceUnit"), formData.get("weight").toDoubleOption.getOrElse(0), formData.get("notes"))
 
-        formData.get("index").toIntOption match
+        formData.get("hash").toIntOption match
         {
-            case Some(index) => info.replaceItemByHash(index, item)
+            case Some(hash) => info.replaceItemByHash(hash, item)
             case None => info.addItem(item)
         }
 
@@ -710,17 +716,18 @@ object Main
         jQ("#item-modal [name=weight]").value(item.weight)
         jQ("#item-modal [name=amount]").value(item.amount)
         jQ("#item-modal [name=notes]").value(item.notes)
-        jQ("#item-modal [name=index]").value(hash)
+        jQ("#item-modal [name=hash]").value(hash)
         jQ("#item-modal .alert").remove()
         jQ("#item-modal #create-new-item").text("Modify item")
+        jQ("#delete-item").show()
         jQ("#item-modal").modal("show")
     }
 
     /** Removes the item currently opened in the modal. */
     private def removeItem(elem: Element, event: JQueryEvent): Unit =
     {
-        val index = jQ("#item-modal [name=index]").value().asInstanceOf[String].toInt
-        info.removeItem(index)
+        val hash = jQ("#item-modal [name=hash]").value().asInstanceOf[String].toInt
+        info.removeItem(hash)
         jQ("#item-modal").modal("hide")
         updateInventory()
     }
@@ -819,6 +826,7 @@ object Main
         jQ("#item-modal .modal-title").text("New item")
         jQ("#item-modal input").value("")
         jQ("#item-modal textarea").value("")
+        jQ("#delete-item").hide()
         jQ("#item-modal .alert").remove()
         jQ("#item-modal").modal("show")
     }

@@ -15,7 +15,7 @@ def replacer(offline: bool, type):
                 return match.group(0)
         else:
             with open(url) as f:
-                file = f.read()
+                file = f.read().replace("//# sourceMappingURL=dndsheetjs-opt.js.map", "")
 
         if type == "js":
             return "<script>\n" + file + "</script>"

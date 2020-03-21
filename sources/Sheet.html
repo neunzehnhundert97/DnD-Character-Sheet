@@ -103,23 +103,30 @@
         <div class="col-xl-3">
 
             <!-- Table with abilities and proficiencies -->
-            <table id="ability-table" class="table not-selectable"></table>
+            <div id="ability-container">
+                <table id="ability-table" class="table not-selectable"></table>
+            </div>
 
             <input id="ability-search" class="form-control mx-1" placeholder="Search">
 
         </div>
 
-        <div class="col-xl-3" style="text-align: center">
-            <table id="weapon-table" class="table">
+        <div class="col-xl-2">
 
-            </table>
-            <input id="weapon-search" class="form-control m-1 hidden" placeholder="Search">
-            <button class="btn btn-secondary" id="add-weapon-button">Add weapon</button>
         </div>
 
         <div class="col-xl-3" style="text-align: center">
 
-            <div id="inventory-container" style="overflow-y: scroll; height: 80vh;">
+            <div id="weapon-container">
+                <table id="weapon-table" class="table"></table>
+            </div>
+            <input id="weapon-search" class="form-control m-1 hidden" placeholder="Search">
+            <button class="btn btn-secondary" id="add-weapon-button">Add weapon</button>
+        </div>
+
+        <div class="col-xl-2" style="text-align: center">
+
+            <div id="inventory-container" style="overflow-y: auto; max-height: 80vh;">
 
             </div>
             <input id="inventory-search" class="form-control m-1 hidden" placeholder="Search">
@@ -520,7 +527,7 @@
 
                         <textarea class="form-control" rows="5" placeholder="Notes" name="notes"></textarea>
 
-                        <input name="index" class="hidden">
+                        <input name="hash" class="hidden">
 
                         <button id="create-new-item" class="btn btn-success mt-2" type="button">Add item</button>
                         <button id="delete-item" class="btn btn-danger mt-2" type="button">Remove item</button>

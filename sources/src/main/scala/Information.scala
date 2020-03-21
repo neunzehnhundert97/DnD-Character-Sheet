@@ -124,8 +124,8 @@ class MainInformation(_general: General = new General(),
     def replaceItemByHash(hash: Int, item: Item): Unit =
         inventory(inventory.find(_.## == hash).map(i => inventory.indexOf(i)).get) = item
 
-    def removeItem(index: Int): Unit =
-        inventory.remove(index)
+    def removeItem(hash: Int): Unit =
+        inventory.remove(inventory.find(_.## == hash).map(i => inventory.indexOf(i)).get)
 
     /** Returns the saved information as JSON string to be saved or exported. */
     def toJSON: String =

@@ -5,7 +5,7 @@ import JQBootstrapped.jq2modalized
 import org.scalajs.dom.raw.{HTMLFormElement, HTMLTextAreaElement, WheelEvent}
 import GlobalScope.encodeURIComponent
 import Extensions.WeaponExtender
-import Main.info
+import scala.collection.mutable.{ListBuffer, Map => MutableMap, Set => MutableSet}
 
 import Ordering.Double.TotalOrdering
 import scala.scalajs.js
@@ -20,10 +20,12 @@ object Main
     var abilitySortbyName: Boolean = true
     var inventorySortByColumn: Int = 0
 
-    // Health variables
-    var maxHealthDiff: Int = 0
-    var currentHealthDiff: Int = 0
-    var tempHealthDiff: Int = 0
+    var statusDiffs: MutableMap[String, Int] = MutableMap(
+        "maxHP" -> 0,
+        "currentHP" -> 0,
+        "tempHP" -> 0,
+        "usedHitDie" -> 0
+    )
 
     /** Entry point */
     def main(args: Array[String]): Unit =
@@ -84,14 +86,21 @@ object Main
         jQ("#inventory-search").on(EventName.keyUp, inventorySearch).value("")
 
         // Handlers for health displays
-        document.getElementById("health-max").addEventListener("wheel", maxHealthWheelHandler)
-        jQ("#health-max").on(EventName.click, maxHealthClickHandler)
-        document.getElementById("health-current").addEventListener("wheel", currentHealthWheelHandler)
-        jQ("#health-current").on(EventName.click, currentHealthClickHandler)
-        document.getElementById("health-max").addEventListener("wheel", maxHealthWheelHandler)
-        jQ("#health-temp").on(EventName.click, maxHealthClickHandler)
-        document.getElementById("health-temp").addEventListener("wheel", tempHealthWheelHandler)
-        jQ("#health-temp").on(EventName.click, tempHealthClickHandler)
+        document.getElementById("health-max").addEventListener("wheel",
+            wheelHandlerWithTempValue("maxHP", downCondition = _ > -info.maxHP))
+        jQ("#health-max").on(EventName.click, clickHandlerWithTempValue("maxHP", updateHealth))
+
+        document.getElementById("health-current").addEventListener("wheel",
+            wheelHandlerWithTempValue("currentHP", upCondition = _ < info.maxHP - info.currentHP, downCondition = _ > -info.currentHP))
+        jQ("#health-current").on(EventName.click, clickHandlerWithTempValue("currentHP", updateHealth))
+
+        document.getElementById("health-temp").addEventListener("wheel",
+            wheelHandlerWithTempValue("tempHP", downCondition = _ > -info.tempHP))
+        jQ("#health-temp").on(EventName.click, clickHandlerWithTempValue("tempHP", updateHealth))
+
+        document.getElementById("hit-die-used").addEventListener("wheel",
+            wheelHandlerWithTempValue("usedHitDie", upCondition = _ < info.maxHitDie - info.usedHitDie, downCondition = _ > -info.maxHitDie))
+        jQ("#hit-die-used").on(EventName.click, clickHandlerWithTempValue("usedHitDie", updateHitDie))
     }
 
     /** Loads information embedded in the documents or the default. */
@@ -134,6 +143,7 @@ object Main
         updateWeaponList()
         updateInventory()
         updateHealth()
+        updateHitDie()
     }
 
     /** Updates the document's title and navbar. */
@@ -290,6 +300,14 @@ object Main
         jQ("#health-current span:eq(1)").text("")
         jQ("#health-temp span:eq(0)").text(info.tempHP)
         jQ("#health-temp span:eq(1)").text("")
+    }
+
+    def updateHitDie(): Unit =
+    {
+        jQ("#hit-die-used span:eq(0)").text(info.usedHitDie)
+        jQ("#hit-die-used span:eq(1)").text("")
+        jQ("#hit-die-total span:eq(0)").text(info.maxHitDie)
+        jQ("#hit-die-total span:eq(1)").text("")
     }
 
     /** Shows a modal on clicking on any attribute. */
@@ -726,82 +744,33 @@ object Main
         updateInventory()
     }
 
-    private def maxHealthWheelHandler(event: WheelEvent): Unit =
+    private def wheelHandlerWithTempValue(key: String, selector: Selector = "span:eq(1)",
+                                          upCondition: Int => Boolean = _ => true, downCondition: Int => Boolean = _ => true)
+                                         (event: WheelEvent): Unit =
     {
         // Prevent scrolling the whole page
         event.preventDefault()
 
         // Detect scroll up
-        if (event.deltaY < 0)
-            maxHealthDiff += 1
+        if (event.deltaY < 0 && upCondition(statusDiffs(key)))
+            statusDiffs(key) += 1
         // Detect scroll down
-        else if (maxHealthDiff > -info.maxHP)
-            maxHealthDiff -= 1
+        else if (event.deltaY > 0 && downCondition(statusDiffs(key)))
+            statusDiffs(key) -= 1
 
-        if (maxHealthDiff != 0)
-            jQ(event.currentTarget).find("span:eq(1)").text(f"$maxHealthDiff%+d")
-                .attr("style", if (maxHealthDiff > 0) "color: green" else "color: red")
+        if (statusDiffs(key) != 0)
+            jQ(event.currentTarget).find(selector).text(f"${statusDiffs(key)}%+d")
+                .attr("style", s"font-weight: bold; color: ${if (statusDiffs(key) > 0) "green" else "red"}")
         else
-            jQ(event.currentTarget).find("span:eq(1)").text("")
+            jQ(event.currentTarget).find(selector).text("")
     }
 
-    private def maxHealthClickHandler(elem: Element, event: JQueryEvent): Unit =
-        if (maxHealthDiff != 0)
+    private def clickHandlerWithTempValue(key: String, update: () => Unit)(elem: Element, event: JQueryEvent): Unit =
+        if (statusDiffs(key) != 0)
         {
-            info.maxHP += maxHealthDiff
-            maxHealthDiff = 0
-        }
-
-    private def currentHealthWheelHandler(event: WheelEvent): Unit =
-    {
-        // Prevent scrolling the whole page
-        event.preventDefault()
-
-        // Detect scroll up
-        if (event.deltaY < 0 && currentHealthDiff < info.maxHP - info.currentHP)
-            currentHealthDiff += 1
-        // Detect scroll down
-        else if (event.deltaY > 0 && currentHealthDiff > -info.currentHP)
-            currentHealthDiff -= 1
-
-        if (currentHealthDiff != 0)
-            jQ(event.currentTarget).find("span:eq(1)").text(f"$currentHealthDiff%+d")
-                .attr("style", if (currentHealthDiff > 0) "color: green" else "color: red")
-        else
-            jQ(event.currentTarget).find("span:eq(1)").text("")
-    }
-
-    private def currentHealthClickHandler(elem: Element, event: JQueryEvent): Unit =
-        if (currentHealthDiff != 0)
-        {
-            info.currentHP += currentHealthDiff
-            currentHealthDiff = 0
-        }
-
-    private def tempHealthWheelHandler(event: WheelEvent): Unit =
-    {
-        // Prevent scrolling the whole page
-        event.preventDefault()
-
-        // Detect scroll up
-        if (event.deltaY < 0)
-            tempHealthDiff += 1
-        // Detect scroll down
-        else if (event.deltaY > 0 && tempHealthDiff > -info.tempHP)
-            tempHealthDiff -= 1
-
-        if (tempHealthDiff != 0)
-            jQ(event.currentTarget).find("span:eq(1)").text(f"$tempHealthDiff%+d")
-                .attr("style", if (tempHealthDiff > 0) "color: green" else "color: red")
-        else
-            jQ(event.currentTarget).find("span:eq(1)").text("")
-    }
-
-    private def tempHealthClickHandler(elem: Element, event: JQueryEvent): Unit =
-        if (tempHealthDiff != 0)
-        {
-            info.tempHP += tempHealthDiff
-            tempHealthDiff = 0
+            info.status(key) += statusDiffs(key)
+            statusDiffs(key) = 0
+            update()
         }
 
     /** Open the import modal. */

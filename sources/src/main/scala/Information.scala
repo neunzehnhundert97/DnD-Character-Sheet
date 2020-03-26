@@ -14,12 +14,12 @@ class MainInformation(_general: General = new General(),
                           "wis" -> 10,
                           "cha" -> 10
                       ),
-                      status: MutableMap[String, Int] = MutableMap(
+                      _status: MutableMap[String, Int] = MutableMap(
                           "maxHP" -> 6,
                           "currentHP" -> 6,
                           "tempHP" -> 0,
                           "ac" -> 10,
-                          "hitDice" -> 1
+                          "usedHitDie" -> 0
                       ),
                       proficiency: MutableSet[String] = MutableSet(),
                       expertise: MutableSet[String] = MutableSet(),
@@ -99,32 +99,44 @@ class MainInformation(_general: General = new General(),
     def experience_=(i: Int): Unit =
         _general.experience = i
 
+    def status: MutableMap[String, Int] =
+        _status
+
     def maxHP: Int =
-        status("maxHP")
+        _status("maxHP")
 
     def maxHP_=(hp: Int): Unit =
     {
-        status("maxHP") = hp
+        _status("maxHP") = hp
         updateHealth()
     }
 
     def currentHP: Int =
-        status("currentHP")
+        _status("currentHP")
 
     def currentHP_=(hp: Int): Unit =
     {
-        status("currentHP") = hp
+        _status("currentHP") = hp
         updateHealth()
     }
 
     def tempHP: Int =
-        status("tempHP")
+        _status("tempHP")
 
     def tempHP_=(hp: Int): Unit =
     {
-        status("tempHP") = hp
+        _status("tempHP") = hp
         updateHealth()
     }
+
+    def maxHitDie: Int =
+        level
+
+    def usedHitDie: Int =
+        _status("usedHitDie")
+
+    def usedHitDie_=(die: Int): Unit =
+        _status("usedHitDie") = die
 
     def weapon(index: Int): Weapon =
         _weapons(index)
@@ -182,7 +194,7 @@ class MainInformation(_general: General = new General(),
         JSON.stringify(MutableMap(
             "general" -> _general,
             "attributes" -> attributes.toJSDictionary,
-            "status" -> status.toJSDictionary,
+            "status" -> _status.toJSDictionary,
             "proficiency" -> proficiency.toJSArray,
             "expertise" -> expertise.toJSArray,
             "weapons" -> _weapons.toJSArray,

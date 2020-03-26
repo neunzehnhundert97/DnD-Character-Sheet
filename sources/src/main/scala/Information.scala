@@ -1,6 +1,6 @@
-import Main.{updateAbilities, updateAttributes, updateWeaponList}
+import Main.{dice, info, statToModifier, updateAbilities, updateAll, updateAttributes, updateHealth, updateInventory, updateTitle, updateWeaponList}
 
-import scala.collection.mutable.{ListBuffer, Map => MutableMap, Set => MutableSet, Seq => MutableSeq}
+import scala.collection.mutable.{ListBuffer, Map => MutableMap, Set => MutableSet}
 import scala.scalajs.js
 import js.JSConverters._
 import scala.scalajs.js.{Dictionary, JSON, |}
@@ -27,6 +27,7 @@ class MainInformation(_general: General = new General(),
                       val inventory: ListBuffer[Item] = ListBuffer())
 {
 
+    /** Returns if there is a proficiency with this ability. */
     def isProficient(ability: String): Boolean =
         proficiency.contains(ability.toLowerCase)
 
@@ -60,19 +61,28 @@ class MainInformation(_general: General = new General(),
         _general.name
 
     def name_=(s: String): Unit =
+    {
         _general.name = s
+        updateTitle()
+    }
 
     def race: String =
         _general.race
 
     def race_=(s: String): Unit =
+    {
         _general.race = s
+        updateTitle()
+    }
 
     def cls: String =
         _general.`class`
 
     def cls_=(s: String): Unit =
+    {
         _general.`class` = s
+        updateTitle()
+    }
 
     def level: Int =
         _general.level
@@ -80,9 +90,7 @@ class MainInformation(_general: General = new General(),
     def level_=(i: Int): Unit =
     {
         _general.level = i
-        updateAbilities()
-        updateAttributes()
-        updateWeaponList()
+        updateAll()
     }
 
     def experience: Int =
@@ -94,8 +102,29 @@ class MainInformation(_general: General = new General(),
     def maxHP: Int =
         status("maxHP")
 
+    def maxHP_=(hp: Int): Unit =
+    {
+        status("maxHP") = hp
+        updateHealth()
+    }
+
     def currentHP: Int =
         status("currentHP")
+
+    def currentHP_=(hp: Int): Unit =
+    {
+        status("currentHP") = hp
+        updateHealth()
+    }
+
+    def tempHP: Int =
+        status("tempHP")
+
+    def tempHP_=(hp: Int): Unit =
+    {
+        status("tempHP") = hp
+        updateHealth()
+    }
 
     def weapon(index: Int): Weapon =
         _weapons(index)
@@ -104,28 +133,49 @@ class MainInformation(_general: General = new General(),
         _weapons.toList
 
     def appWeapon(weapon: Weapon): Unit =
+    {
         _weapons += weapon
+        updateWeaponList()
+    }
 
     def replaceWeapon(index: Int, weapon: Weapon): Unit =
+    {
         _weapons(index) = weapon
+        updateWeaponList()
+    }
 
     def removeWeapon(index: Int): Unit =
+    {
         _weapons.remove(index)
+        updateWeaponList()
+    }
 
     def item(hash: Int): Item =
         inventory.find(_.## == hash).get
 
     def addItem(item: Item): Unit =
+    {
         inventory += item
+        updateInventory()
+    }
 
     def replaceItem(index: Int, item: Item): Unit =
+    {
         inventory(index) = item
+        updateInventory()
+    }
 
     def replaceItemByHash(hash: Int, item: Item): Unit =
+    {
         inventory(inventory.find(_.## == hash).map(i => inventory.indexOf(i)).get) = item
+        updateInventory()
+    }
 
     def removeItem(hash: Int): Unit =
+    {
         inventory.remove(inventory.find(_.## == hash).map(i => inventory.indexOf(i)).get)
+        updateInventory()
+    }
 
     /** Returns the saved information as JSON string to be saved or exported. */
     def toJSON: String =
@@ -154,6 +204,7 @@ class MainInformation(_general: General = new General(),
                 case s: String => attributes(s.toLowerCase.substring(0, 3)) = value
             }
             updateAbilities()
+            updateAttributes()
             updateWeaponList()
         }
     }
@@ -203,9 +254,51 @@ class Weapon(val name: String,
              val shortRange: Int,
              val longRange: Int) extends js.Object
 
+
 class Item(val name: String,
            val amount: String,
            val price: Int,
            val priceUnit: String,
            val weight: Double,
            val notes: String) extends js.Object
+
+object Extensions
+{
+
+    implicit class WeaponExtender(weapon: Weapon)
+    {
+        def usedAttribute: String =
+            if (weapon.melee && (!weapon.finesse || info.score("str") > info.score("dex")))
+                "str"
+            else
+                "dex"
+
+        def usedScore: Int =
+            info.score(usedAttribute)
+
+        def usedModifier: Int =
+            statToModifier(usedScore)
+
+        def toHit: Int =
+            usedModifier + (if (weapon.proficiency) info.proficiencyBonus else 0) + weapon.hitBonus
+
+        def toDamage: Int =
+            usedModifier + weapon.damageBonus
+
+        def damageString: String =
+            s"${if (weapon.dieCount > 1) weapon.dieCount.toString else ""}${weapon.die}${
+                if (weapon.versatile) "/" + dice(dice.indexOf(weapon.die) + 1) else ""
+            } ${
+                if (toDamage != 0)
+                    f"$toDamage%+d"
+                else
+                    ""
+            }"
+
+        def rangeString: String =
+            if (!weapon.melee || weapon.thrown)
+                s"${weapon.shortRange} / ${weapon.longRange}"
+            else "-"
+    }
+
+}

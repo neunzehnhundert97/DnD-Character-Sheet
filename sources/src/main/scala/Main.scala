@@ -4,6 +4,8 @@ import scalatags.JsDom.all._
 import JQBootstrapped.jq2modalized
 import org.scalajs.dom.raw.{HTMLFormElement, HTMLTextAreaElement, WheelEvent}
 import GlobalScope.encodeURIComponent
+import Extensions.WeaponExtender
+import Main.info
 
 import Ordering.Double.TotalOrdering
 import scala.scalajs.js
@@ -14,8 +16,14 @@ object Main
 
     var info: MainInformation = _
 
+    // Variables for sorting directions
     var abilitySortbyName: Boolean = true
     var inventorySortByColumn: Int = 0
+
+    // Health variables
+    var maxHealthDiff: Int = 0
+    var currentHealthDiff: Int = 0
+    var tempHealthDiff: Int = 0
 
     /** Entry point */
     def main(args: Array[String]): Unit =
@@ -29,11 +37,7 @@ object Main
     def onReady(): Unit =
     {
         initializeInformation()
-        updateTitle()
-        updateAttributes()
-        updateAbilities()
-        updateWeaponList()
-        updateInventory()
+        updateAll()
 
         // Show a warning when trying to reload the page
         window.addEventListener("beforeunload", (e: js.Dynamic) =>
@@ -49,6 +53,7 @@ object Main
         jQ("#import-string-button").on(EventName.click, importHandler)
         jQ("#button-export").on(EventName.click, openExportModal)
         jQ("#button-save").on(EventName.click, saveHandler)
+        jQ("#button-options").on(EventName.click, openOptionsModal)
 
         // Set click handler for general information
         jQ("#general-stats").on(EventName.click, openGeneralModal)
@@ -77,6 +82,16 @@ object Main
         jQ("#ability-search").on(EventName.keyUp, abilitySearch).value("")
         jQ("#weapon-search").on(EventName.keyUp, weaponSearch).value("")
         jQ("#inventory-search").on(EventName.keyUp, inventorySearch).value("")
+
+        // Handlers for health displays
+        document.getElementById("health-max").addEventListener("wheel", maxHealthWheelHandler)
+        jQ("#health-max").on(EventName.click, maxHealthClickHandler)
+        document.getElementById("health-current").addEventListener("wheel", currentHealthWheelHandler)
+        jQ("#health-current").on(EventName.click, currentHealthClickHandler)
+        document.getElementById("health-max").addEventListener("wheel", maxHealthWheelHandler)
+        jQ("#health-temp").on(EventName.click, maxHealthClickHandler)
+        document.getElementById("health-temp").addEventListener("wheel", tempHealthWheelHandler)
+        jQ("#health-temp").on(EventName.click, tempHealthClickHandler)
     }
 
     /** Loads information embedded in the documents or the default. */
@@ -108,6 +123,17 @@ object Main
             println("Loading default information")
             info = new MainInformation()
         }
+    }
+
+    /** Performs all updates. */
+    def updateAll(): Unit =
+    {
+        updateTitle()
+        updateAttributes()
+        updateAbilities()
+        updateWeaponList()
+        updateInventory()
+        updateHealth()
     }
 
     /** Updates the document's title and navbar. */
@@ -186,46 +212,16 @@ object Main
     /** Updates the list of weapons. */
     def updateWeaponList(): Unit =
     {
-        val contents = info.weapons.zipWithIndex.iterator.map(t =>
-        {
-            val (weapon, index) = t
-
-            // Compute modifier
-            val mod = if (weapon.melee && (!weapon.finesse || info.score("str") > info.score("dex")))
-                statToModifier(info.score("str"))
-            else
-                statToModifier(info.score("dex"))
-
-            val damage = weapon.damageBonus + mod
-            val toHit = mod + (if (weapon.proficiency)
-            // Apply proficiency
-                weapon.hitBonus + info.proficiencyBonus
-            else weapon.hitBonus)
-
-
-            val count = if (weapon.dieCount > 1) weapon.dieCount.toString else ""
-
-            // Prepare dis play damage
-            val damageString = s"$count${weapon.die}${
-                if (weapon.versatile) "/" + dice(dice.indexOf(weapon.die) + 1) else ""
-            } ${
-                if (damage != 0)
-                    f"$damage%+d"
-                else
-                    ""
-            }"
-
-            val range = if (!weapon.melee || weapon.thrown)
-                s"${weapon.shortRange} / ${weapon.longRange}"
-            else "-"
-
-            tr(cls := "not-selectable", data.index := index)(td(weapon.name), td(range), td(toHit), td(damageString))
-        }).toList
-
         jQ("#weapon-container").html(
             table(id := "weapon-table", cls := "table")(
                 tr(th("Weapon"), th("range"), th("to hit"), th("damage")),
-                contents
+                for ((weapon, index) <- info.weapons.zipWithIndex)
+                    yield tr(cls := "not-selectable", data.index := index)(
+                        td(weapon.name),
+                        td(weapon.rangeString),
+                        td(weapon.toHit),
+                        td(weapon.damageString)
+                    )
             ).render
         ).find("tr:not(:first-child)").on(EventName.click, weaponHandler)
 
@@ -286,6 +282,16 @@ object Main
             jQ("#inventory-search").hide()
     }
 
+    def updateHealth(): Unit =
+    {
+        jQ("#health-max span:eq(0)").text(info.maxHP)
+        jQ("#health-max span:eq(1)").text("")
+        jQ("#health-current span:eq(0)").text(info.currentHP)
+        jQ("#health-current span:eq(1)").text("")
+        jQ("#health-temp span:eq(0)").text(info.tempHP)
+        jQ("#health-temp span:eq(1)").text("")
+    }
+
     /** Shows a modal on clicking on any attribute. */
     private def attributeHandler(elem: Element, event: JQueryEvent): Unit =
     {
@@ -321,9 +327,6 @@ object Main
 
         // Write values into table and info object
         info.score(attribute) = score
-
-        updateAttributes()
-        updateAbilities()
 
         jQ("#attribute-modal").modal("hide")
     }
@@ -461,7 +464,6 @@ object Main
     private def classHandler(elem: Element, event: JQueryEvent): Unit =
     {
         info.cls = jQ(elem).value().asInstanceOf[String]
-        updateTitle()
     }
 
     /** Handles changed experience. */
@@ -478,7 +480,6 @@ object Main
 
         // Update shown info
         jQ("#general-modal select[name=level]").value(level)
-        updateTitle()
     }
 
     /** Handles a changed level. */
@@ -492,22 +493,15 @@ object Main
 
         // Update shown info
         jQ("#general-modal input[name=experience]").value(Mappings.levels(level)._1)
-        updateTitle()
     }
 
     /** Handles a changed name. */
     private def nameHandler(elem: Element, event: JQueryEvent): Unit =
-    {
         info.name = jQ(elem).value().asInstanceOf[String]
-        updateTitle()
-    }
 
     /** Handles a changed race. */
     private def raceHandler(elem: Element, event: JQueryEvent): Unit =
-    {
         info.race = jQ(elem).value().asInstanceOf[String]
-        updateTitle()
-    }
 
     /** Handles a changed weapon type and hides or display elements accordingly. */
     private def weaponTypeHandler(elem: Element, event: JQueryEvent): Unit =
@@ -732,19 +726,83 @@ object Main
         updateInventory()
     }
 
-    private def healthPointsHandler(event: WheelEvent): Unit =
+    private def maxHealthWheelHandler(event: WheelEvent): Unit =
     {
+        // Prevent scrolling the whole page
         event.preventDefault()
 
-        val elem = jQ(event.currentTarget)
-        val hp = elem.text().split(": ")(1).split(" / ")(0).toInt
+        // Detect scroll up
+        if (event.deltaY < 0)
+            maxHealthDiff += 1
+        // Detect scroll down
+        else if (maxHealthDiff > -info.maxHP)
+            maxHealthDiff -= 1
 
-        // Decide whether the wheel went up or down
-        if (event.deltaY < 0 && hp < info.maxHP)
-            elem.text(s"HP: ${hp + 1} / ${info.maxHP}")
-        else if (event.deltaY > 0 && hp > 0)
-            elem.text(s"HP: ${hp - 1} / ${info.maxHP}")
+        if (maxHealthDiff != 0)
+            jQ(event.currentTarget).find("span:eq(1)").text(f"$maxHealthDiff%+d")
+                .attr("style", if (maxHealthDiff > 0) "color: green" else "color: red")
+        else
+            jQ(event.currentTarget).find("span:eq(1)").text("")
     }
+
+    private def maxHealthClickHandler(elem: Element, event: JQueryEvent): Unit =
+        if (maxHealthDiff != 0)
+        {
+            info.maxHP += maxHealthDiff
+            maxHealthDiff = 0
+        }
+
+    private def currentHealthWheelHandler(event: WheelEvent): Unit =
+    {
+        // Prevent scrolling the whole page
+        event.preventDefault()
+
+        // Detect scroll up
+        if (event.deltaY < 0 && currentHealthDiff < info.maxHP - info.currentHP)
+            currentHealthDiff += 1
+        // Detect scroll down
+        else if (event.deltaY > 0 && currentHealthDiff > -info.currentHP)
+            currentHealthDiff -= 1
+
+        if (currentHealthDiff != 0)
+            jQ(event.currentTarget).find("span:eq(1)").text(f"$currentHealthDiff%+d")
+                .attr("style", if (currentHealthDiff > 0) "color: green" else "color: red")
+        else
+            jQ(event.currentTarget).find("span:eq(1)").text("")
+    }
+
+    private def currentHealthClickHandler(elem: Element, event: JQueryEvent): Unit =
+        if (currentHealthDiff != 0)
+        {
+            info.currentHP += currentHealthDiff
+            currentHealthDiff = 0
+        }
+
+    private def tempHealthWheelHandler(event: WheelEvent): Unit =
+    {
+        // Prevent scrolling the whole page
+        event.preventDefault()
+
+        // Detect scroll up
+        if (event.deltaY < 0)
+            tempHealthDiff += 1
+        // Detect scroll down
+        else if (event.deltaY > 0 && tempHealthDiff > -info.tempHP)
+            tempHealthDiff -= 1
+
+        if (tempHealthDiff != 0)
+            jQ(event.currentTarget).find("span:eq(1)").text(f"$tempHealthDiff%+d")
+                .attr("style", if (tempHealthDiff > 0) "color: green" else "color: red")
+        else
+            jQ(event.currentTarget).find("span:eq(1)").text("")
+    }
+
+    private def tempHealthClickHandler(elem: Element, event: JQueryEvent): Unit =
+        if (tempHealthDiff != 0)
+        {
+            info.tempHP += tempHealthDiff
+            tempHealthDiff = 0
+        }
 
     /** Open the import modal. */
     private def openImportModal(elem: Element, event: JQueryEvent): Unit =
@@ -762,11 +820,7 @@ object Main
             jQ("#import-modal").modal("hide")
 
             // Apply read information
-            updateTitle()
-            updateAttributes()
-            updateAbilities()
-            updateWeaponList()
-            updateInventory()
+            updateAll()
         } catch
         {
             case _: Throwable =>
@@ -838,7 +892,7 @@ object Main
         jQ("#information-container").text(info.toJSON)
 
         // Generate file content out of the document
-        val content = "data:plain/attachment," + encodeURIComponent(document.documentElement.innerHTML)
+        val content = "data:plain/attachment," + encodeURIComponent("<!DOCTYPE HTML>" + document.documentElement.outerHTML)
 
         // Create a element with download
         val element = a(href := content, attr("download") := s"${info.name} - Sheet.html", style := "display: none").render
@@ -849,6 +903,14 @@ object Main
         document.body.removeChild(element)
     }
 
+    /** Shows the options modal. */
+    private def openOptionsModal(elem: Element, event: JQueryEvent): Unit =
+    {
+        // Open the modal
+        jQ("#options-modal").modal("show")
+    }
+
+    /** Creates an alert in the given element with the given text. */
     private def showAlert(selector: Selector, msg: String): Unit =
         jQ(selector).html(div(cls := "alert alert-danger alert-dismissible fade show")(
             button(`type` := "button", cls := "close", data.dismiss := "alert")(raw("&times")),
@@ -857,5 +919,5 @@ object Main
 
     /** Convert an attribute into a modifier. */
     def statToModifier(stat: Int): Int =
-        Math.floor((stat - 10) / 2).toInt
+        Math.floor((stat - 10.0) / 2).toInt
 }

@@ -52,6 +52,10 @@ input, select {
     text-align: center;
 }
 
+#health-table tr * {
+    text-align: center;
+}
+
 #ability-table tr:not(:first-child):hover {
     animation-name: greenish;
     animation-duration: 0.5s;

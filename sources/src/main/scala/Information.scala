@@ -21,6 +21,9 @@ class MainInformation(_general: General = new General(),
                           "ac" -> 10,
                           "usedHitDie" -> 0
                       ),
+                      _customStatus: MutableMap[String, CustomStat] = MutableMap(
+                          "Action Surge" -> new CustomStat(1, 1)
+                      ),
                       proficiency: MutableSet[String] = MutableSet(),
                       expertise: MutableSet[String] = MutableSet(),
                       _weapons: ListBuffer[Weapon] = ListBuffer(),
@@ -138,6 +141,9 @@ class MainInformation(_general: General = new General(),
     def usedHitDie_=(die: Int): Unit =
         _status("usedHitDie") = die
 
+    def customStatus: MutableMap[String, CustomStat] =
+        _customStatus
+
     def weapon(index: Int): Weapon =
         _weapons(index)
 
@@ -195,6 +201,7 @@ class MainInformation(_general: General = new General(),
             "general" -> _general,
             "attributes" -> attributes.toJSDictionary,
             "status" -> _status.toJSDictionary,
+            "customStatus" -> _customStatus.map(t => t._1 -> t._2.asInstanceOf[Dictionary[Int]]).toJSDictionary,
             "proficiency" -> proficiency.toJSArray,
             "expertise" -> expertise.toJSArray,
             "weapons" -> _weapons.toJSArray,
@@ -232,6 +239,7 @@ object MainInformation
             data("general").asInstanceOf[General],
             data("attributes").asInstanceOf[Dictionary[Int]],
             data("status").asInstanceOf[Dictionary[Int]],
+            data("customStatus").asInstanceOf[Dictionary[Dictionary[Int]]].map(t => t._1 -> t._2.asInstanceOf[CustomStat]),
             data("proficiency").asInstanceOf[js.Array[String]].to(MutableSet),
             data("expertise").asInstanceOf[js.Array[String]].to(MutableSet),
             data("weapons").asInstanceOf[js.Array[Weapon]].to(ListBuffer),
@@ -265,7 +273,46 @@ class Weapon(val name: String,
              val thrown: Boolean,
              val shortRange: Int,
              val longRange: Int) extends js.Object
+{
+    def usedAttribute: String =
+        if (melee && (!finesse || info.score("str") > info.score("dex")))
+            "str"
+        else
+            "dex"
 
+    def usedScore: Int =
+        info.score(usedAttribute)
+
+    def usedModifier: Int =
+        statToModifier(usedScore)
+
+    def toHit: Int =
+        usedModifier + (if (proficiency) info.proficiencyBonus else 0) + hitBonus
+
+    def toDamage: Int =
+        usedModifier + damageBonus
+
+    def damageString: String =
+        s"${if (dieCount > 1) dieCount.toString else ""}$die${
+            if (versatile) "/" + dice(dice.indexOf(die) + 1) else ""
+        } ${
+            if (toDamage != 0)
+                f"$toDamage%+d"
+            else
+                ""
+        }"
+
+    def rangeString: String =
+        if (!melee || thrown)
+            s"$shortRange / $longRange"
+        else "-"
+}
+
+class CustomStat(var max: Int,
+                 var current: Int) extends js.Object
+{
+    def test: Int = 0
+}
 
 class Item(val name: String,
            val amount: String,
@@ -273,44 +320,3 @@ class Item(val name: String,
            val priceUnit: String,
            val weight: Double,
            val notes: String) extends js.Object
-
-object Extensions
-{
-
-    implicit class WeaponExtender(weapon: Weapon)
-    {
-        def usedAttribute: String =
-            if (weapon.melee && (!weapon.finesse || info.score("str") > info.score("dex")))
-                "str"
-            else
-                "dex"
-
-        def usedScore: Int =
-            info.score(usedAttribute)
-
-        def usedModifier: Int =
-            statToModifier(usedScore)
-
-        def toHit: Int =
-            usedModifier + (if (weapon.proficiency) info.proficiencyBonus else 0) + weapon.hitBonus
-
-        def toDamage: Int =
-            usedModifier + weapon.damageBonus
-
-        def damageString: String =
-            s"${if (weapon.dieCount > 1) weapon.dieCount.toString else ""}${weapon.die}${
-                if (weapon.versatile) "/" + dice(dice.indexOf(weapon.die) + 1) else ""
-            } ${
-                if (toDamage != 0)
-                    f"$toDamage%+d"
-                else
-                    ""
-            }"
-
-        def rangeString: String =
-            if (!weapon.melee || weapon.thrown)
-                s"${weapon.shortRange} / ${weapon.longRange}"
-            else "-"
-    }
-
-}

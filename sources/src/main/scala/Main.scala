@@ -4,9 +4,8 @@ import scalatags.JsDom.all._
 import JQBootstrapped.jq2modalized
 import org.scalajs.dom.raw.{HTMLFormElement, HTMLTextAreaElement, WheelEvent}
 import GlobalScope.encodeURIComponent
-import Extensions.WeaponExtender
-import scala.collection.mutable.{ListBuffer, Map => MutableMap, Set => MutableSet}
 
+import scala.collection.mutable.{Map => MutableMap}
 import Ordering.Double.TotalOrdering
 import scala.scalajs.js
 
@@ -42,10 +41,7 @@ object Main
         updateAll()
 
         // Show a warning when trying to reload the page
-        window.addEventListener("beforeunload", (e: js.Dynamic) =>
-        {
-            e.preventDefault()
-        })
+        window.addEventListener("beforeunload", (e: js.Dynamic) => e.preventDefault())
 
         // Define click handler for attributes
         jQ("#attribute-table .row-stat").on(EventName.click, attributeHandler)
@@ -144,6 +140,7 @@ object Main
         updateInventory()
         updateHealth()
         updateHitDie()
+        updateCustomStatuses()
     }
 
     /** Updates the document's title and navbar. */
@@ -308,6 +305,50 @@ object Main
         jQ("#hit-die-used span:eq(1)").text("")
         jQ("#hit-die-total span:eq(0)").text(info.maxHitDie)
         jQ("#hit-die-total span:eq(1)").text("")
+    }
+
+    def updateCustomStatuses(): Unit =
+    {
+        jQ("#custom-status-container").html(
+            table(cls := "table", id := "custom-status-table")(
+                tr(th("Name"), th("Current"), th("Max")),
+                (for ((status, values) <- info.customStatus)
+                    yield tr(td(status), td(span(values.current), span()), td(span(values.max), span()))).toList
+            ).render
+        ).find("tr:not(:first-child)").each((elem, _) =>
+        {
+            val jElem = jQ(elem)
+
+            // Prepare keys
+            val key = jElem.children().at(0).text()
+            val keyMax = "max" + key
+            val keyCurrent = "current" + key
+
+            // Enter key entries in diffs
+            statusDiffs(keyMax) = 0
+            statusDiffs(keyCurrent) = 0
+
+            // Register wheel handlers
+            jElem.children().get(1).get.addEventListener("wheel",
+                wheelHandlerWithTempValue(keyCurrent, downCondition = _ > -info.customStatus(key).current,
+                    upCondition = _ < info.customStatus(key).max - info.customStatus(key).current))
+            jElem.children().get(2).get.addEventListener("wheel",
+                wheelHandlerWithTempValue(keyMax, downCondition = _ > -info.customStatus(key).max))
+
+            // Register click handlers
+            jElem.children().at(1).on(EventName.click, (_, _) => if (statusDiffs(keyCurrent) != 0)
+            {
+                info.customStatus(key).current += statusDiffs(keyCurrent)
+                statusDiffs(keyCurrent) = 0
+                updateCustomStatuses()
+            })
+            jElem.children().at(2).on(EventName.click, (_, _) => if (statusDiffs(keyMax) != 0)
+            {
+                info.customStatus(key).max += statusDiffs(keyMax)
+                statusDiffs(keyMax) = 0
+                updateCustomStatuses()
+            })
+        })
     }
 
     /** Shows a modal on clicking on any attribute. */
@@ -792,7 +833,7 @@ object Main
             updateAll()
         } catch
         {
-            case _: Throwable =>
+            case e: Throwable =>
                 window.alert("Malformed input!")
         }
 

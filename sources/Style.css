@@ -82,6 +82,12 @@ input, select {
     text-align: center;
 }
 
+#custom-status-table tr:not(:first-child):hover {
+    animation-name: greenish;
+    animation-duration: 0.5s;
+    animation-fill-mode: forwards;
+}
+
 .proficient-with {
     font-weight: 600;
 }

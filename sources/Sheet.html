@@ -600,6 +600,18 @@
                 <!-- Modal body -->
                 <div class="modal-body" style="text-align: center;">
                     <div class="alert-container"></div>
+
+                    <form id="custom-status-form">
+                        <div class="input-group">
+                            <div class="input-group-prepend"><span class="input-group-text">Name</span></div>
+                            <input class="form-control" name="name">
+                        </div>
+
+                        <input class="hidden" name="oldName">
+
+                        <button id="create-new-status" class="btn btn-success mt-2" type="button">Add status</button>
+                        <button id="delete-status" class="btn btn-danger mt-2" type="button">Remove status</button>
+                    </form>
                 </div>
             </div>
         </div>

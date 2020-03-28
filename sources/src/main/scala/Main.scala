@@ -4,6 +4,7 @@ import scalatags.JsDom.all._
 import JQBootstrapped.jq2modalized
 import org.scalajs.dom.raw.{HTMLFormElement, HTMLTextAreaElement, WheelEvent}
 import GlobalScope.encodeURIComponent
+import org.scalajs.dom
 
 import scala.collection.mutable.{Map => MutableMap}
 import Ordering.Double.TotalOrdering
@@ -75,6 +76,9 @@ object Main
         jQ("#add-item-button").on(EventName.click, openNewItemModal)
         jQ("#create-new-item").on(EventName.click, createupdateItem)
         jQ("#delete-item").on(EventName.click, removeItem)
+        jQ("#add-status-button").on(EventName.click, openNewStatusModal)
+        jQ("#create-new-status").on(EventName.click, createUpdateCustomStatus)
+        jQ("#delete-status").on(EventName.click, removeCustomStatus)
 
         // Register search handlers
         jQ("#ability-search").on(EventName.keyUp, abilitySearch).value("")
@@ -348,7 +352,7 @@ object Main
                 statusDiffs(keyMax) = 0
                 updateCustomStatuses()
             })
-        })
+        }).children().at(0).on(EventName.click, modifyCustomStatus)
     }
 
     /** Shows a modal on clicking on any attribute. */
@@ -785,6 +789,54 @@ object Main
         updateInventory()
     }
 
+    /** */
+    private def createUpdateCustomStatus(elem: Element, event: JQueryEvent): Unit =
+    {
+        val formData = new FormData(document.getElementById("custom-status-form").asInstanceOf[HTMLFormElement])
+        val name = formData.get("name")
+
+        if (name.isEmpty)
+        {
+            showAlert("#status-modal .alert-container", "Name is missing")
+            return
+        }
+
+        val oldName = formData.get("oldName")
+
+        if (oldName.isEmpty)
+            info.customStatus(name) = new CustomStat(0, 0)
+        else
+        {
+            info.customStatus(name) = info.customStatus(oldName)
+            info.customStatus.remove(oldName)
+        }
+
+        jQ("#status-modal").modal("hide")
+        updateCustomStatuses()
+    }
+
+    /** */
+    private def modifyCustomStatus(elem: Element, event: JQueryEvent): Unit =
+    {
+        jQ("#status-modal .modal-title").text("Modify status")
+        jQ("#create-new-status").text("Modify status")
+        val name = jQ(elem).text()
+        jQ("#status-modal input[name=name]").value(name)
+        jQ("#status-modal input[name=oldName]").value(name)
+        jQ("#delete-status").show()
+        jQ("#status-modal").modal("show")
+    }
+
+    /** */
+    private def removeCustomStatus(elem: Element, event: JQueryEvent): Unit =
+    {
+        val oldName = jQ("#custom-status-form [name=oldName]").value().asInstanceOf[String]
+        info.customStatus.remove(oldName)
+        jQ("#status-modal").modal("hide")
+        updateCustomStatuses()
+    }
+
+    /** */
     private def wheelHandlerWithTempValue(key: String, selector: Selector = "span:eq(1)",
                                           upCondition: Int => Boolean = _ => true, downCondition: Int => Boolean = _ => true)
                                          (event: WheelEvent): Unit =
@@ -893,6 +945,15 @@ object Main
         jQ("#delete-item").hide()
         jQ("#item-modal .alert").remove()
         jQ("#item-modal").modal("show")
+    }
+
+    private def openNewStatusModal(elem: Element, event: JQueryEvent): Unit =
+    {
+        jQ("#status-modal .modal-title").text("New status")
+        jQ("#status-modal input").value("")
+        jQ("#create-new-status").text("Add status")
+        jQ("#delete-status").hide()
+        jQ("#status-modal").modal("show")
     }
 
     /** Shows a save dialog. */

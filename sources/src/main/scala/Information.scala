@@ -310,9 +310,6 @@ class Weapon(val name: String,
 
 class CustomStat(var max: Int,
                  var current: Int) extends js.Object
-{
-    def test: Int = 0
-}
 
 class Item(val name: String,
            val amount: String,

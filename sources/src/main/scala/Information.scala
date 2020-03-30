@@ -1,4 +1,11 @@
-import Main.{dice, info, statToModifier, updateAbilities, updateAll, updateAttributes, updateHealth, updateInventory, updateTitle, updateWeaponList}
+import Main.{dice, info, updateAll, updateTitle}
+
+import Utility._
+import WeaponController._
+import InventoryController._
+import StatusController._
+import AbilityController._
+import AttributeController._
 
 import scala.collection.mutable.{ListBuffer, Map => MutableMap, Set => MutableSet}
 import scala.scalajs.js

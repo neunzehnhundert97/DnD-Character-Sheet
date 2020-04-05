@@ -54,6 +54,8 @@ object Main
         jQ("#general-modal input[name=experience]").on(EventName.change, experienceHandler)
         jQ("#general-modal input[name=class]").on(EventName.change, classHandler)
         jQ("#general-modal input[name=race]").on(EventName.change, raceHandler)
+        jQ("#general-modal select[name=casterType]").on(EventName.change, casterHandler)
+        jQ("#general-modal #is-jack-of-all-trades").on(EventName.change, jackHandler)
 
         // Call ready function of controllers
         readyAttributes()
@@ -158,6 +160,14 @@ object Main
     private def raceHandler(elem: Element, event: JQueryEvent): Unit =
         info.race = jQ(elem).value().asInstanceOf[String]
 
+    /** Handles a caster type. */
+    private def casterHandler(elem: Element, event: JQueryEvent): Unit =
+        info.casterType = jQ(elem).value().asInstanceOf[String]
+
+    /** Handles a changed jack of all trades property. */
+    private def jackHandler(elem: Element, event: JQueryEvent): Unit =
+        info.jackOfAllTrades = jQ(elem).prop("checked").asInstanceOf[Boolean]
+
     /** Open the import modal. */
     private def openImportModal(elem: Element, event: JQueryEvent): Unit =
     {
@@ -207,7 +217,9 @@ object Main
         jQ("#general-modal input[name=experience]").value(info.experience)
         jQ("#general-modal input[name=class]").value(info.cls)
         jQ("#general-modal input[name=race]").value(info.race)
-        jQ("#item-modal #create-new-item").text("Create item")
+        jQ("#general-modal input[name=race]").value(info.race)
+        jQ("#general-modal select[name=casterType]").value(info.casterType)
+        jQ("#general-modal #is-jack-of-all-trades").prop("checked", info.jackOfAllTrades)
         jQ("#general-modal").modal("show")
     }
 

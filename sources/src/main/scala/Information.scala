@@ -107,8 +107,24 @@ class MainInformation(_general: General = new General(),
     def experience_=(i: Int): Unit =
         _general.experience = i
 
+    def casterType: String =
+        _general.casterType
+
+    def casterType_=(value: String): Unit =
+        _general.casterType = value
+
+    def jackOfAllTrades: Boolean =
+        _general.jackOfAllTrades
+
+    def jackOfAllTrades_=(value: Boolean): Unit =
+    {
+        _general.jackOfAllTrades = value
+        updateAbilities()
+    }
+
     def status: MutableMap[String, Int] =
         _status
+
 
     def maxHP: Int =
         _status("maxHP")
@@ -259,7 +275,9 @@ class General(var name: String = "Name",
               var `class`: String = "Fighter",
               var race: String = "Cyber Elf",
               var level: Int = 1,
-              var experience: Int = 0) extends js.Object
+              var experience: Int = 0,
+              var jackOfAllTrades: Boolean = false,
+              var casterType: String = "No caster") extends js.Object
 
 class Weapon(val name: String,
              val die: String,

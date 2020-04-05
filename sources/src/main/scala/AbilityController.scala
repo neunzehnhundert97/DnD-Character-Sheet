@@ -33,6 +33,8 @@ object AbilityController
                     (key, statToModifier(info.score(value)) + info.proficiencyBonus * 2, true, true)
                 else
                     (key, statToModifier(info.score(value)) + info.proficiencyBonus, true, false)
+            else if (info.jackOfAllTrades)
+                (key, statToModifier(info.score(value)) + Math.floor(info.proficiencyBonus / 2).toInt, false, false)
             else
                 (key, statToModifier(info.score(value)), false, false)
         })

@@ -9,7 +9,6 @@ import AttributeController._
 import scala.collection.mutable.{ListBuffer, Map => MutableMap, Set => MutableSet}
 import scala.scalajs.js
 import js.JSConverters._
-import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 import scala.scalajs.js.{Dictionary, JSON, |}
 
 class MainInformation(_general: General = new General(),
@@ -28,13 +27,12 @@ class MainInformation(_general: General = new General(),
                           "ac" -> 10,
                           "usedHitDie" -> 0
                       ),
-                      _customStatus: MutableMap[String, CustomStat] = MutableMap(
-                          "Action Surge" -> new CustomStat(1, 1)
-                      ),
+                      _customStatus: MutableMap[String, CustomStat] = MutableMap(),
                       proficiency: MutableSet[String] = MutableSet(),
                       expertise: MutableSet[String] = MutableSet(),
                       _weapons: ListBuffer[Weapon] = ListBuffer(),
-                      val inventory: ListBuffer[Item] = ListBuffer())
+                      val inventory: ListBuffer[Item] = ListBuffer(),
+                      val notes: ListBuffer[Note] = ListBuffer())
 {
 
     /** Returns if there is a proficiency with this ability. */
@@ -212,7 +210,8 @@ class MainInformation(_general: General = new General(),
             "proficiency" -> proficiency.toJSArray,
             "expertise" -> expertise.toJSArray,
             "weapons" -> _weapons.toJSArray,
-            "inventory" -> inventory.toJSArray
+            "inventory" -> inventory.toJSArray,
+            "notes" -> notes.toJSArray
         ).toJSDictionary)
 
     object score
@@ -250,7 +249,8 @@ object MainInformation
             data("proficiency").asInstanceOf[js.Array[String]].to(MutableSet),
             data("expertise").asInstanceOf[js.Array[String]].to(MutableSet),
             data("weapons").asInstanceOf[js.Array[Weapon]].to(ListBuffer),
-            data("inventory").asInstanceOf[js.Array[Item]].to(ListBuffer)
+            data("inventory").asInstanceOf[js.Array[Item]].to(ListBuffer),
+            data("notes").asInstanceOf[js.Array[Note]].to(ListBuffer)
         )
     }
 }
@@ -290,6 +290,9 @@ class Item(val name: String,
            val priceUnit: String,
            val weight: Double,
            val notes: String) extends js.Object
+
+class Note(val title: String,
+           val text: String) extends js.Object
 
 object Extension
 {

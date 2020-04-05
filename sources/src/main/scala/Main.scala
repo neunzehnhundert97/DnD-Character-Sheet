@@ -4,12 +4,13 @@ import scalatags.JsDom.all._
 import JQBootstrapped.jq2modalized
 import org.scalajs.dom.raw.HTMLTextAreaElement
 import GlobalScope.encodeURIComponent
-
 import WeaponController._
 import InventoryController._
 import StatusController._
 import AbilityController._
 import AttributeController._
+import NoteController._
+import org.scalajs.dom
 
 import scala.scalajs.js
 
@@ -60,6 +61,7 @@ object Main
         readyInventory()
         readyStatuses()
         readyWeapons()
+        readyNotes()
     }
 
     /** Loads information embedded in the documents or the default. */
@@ -82,7 +84,7 @@ object Main
         catch
         {
             case e: Throwable =>
-                println("There was an error while loading the embedded information: " + e)
+                println("There was an error while loading the embedded information: " + e.getCause)
         }
 
         // If there was no information string or it was invalid, the default information object is created
@@ -104,6 +106,7 @@ object Main
         updateHealth()
         updateHitDie()
         updateCustomStatuses()
+        updateNotes()
     }
 
     /** Updates the document's title and navbar. */

@@ -53,10 +53,10 @@
 <div id="slider-common" class="container-fluid">
     <div class="row">
 
-        <div class="col-xl-2">
+        <div class="col-xl-2" style="text-align: center">
 
             <!-- Table with attributes -->
-            <table id="attribute-table" class="table not-selectable">
+            <table id="attribute-table" class="table not-selectable m-1">
                 <tr>
                     <th>Stat</th>
                     <th>Score</th>
@@ -100,6 +100,11 @@
                     <td></td>
                 </tr>
             </table>
+
+            <!-- Table with notes -->
+            <div id="note-container" style="overflow-y: auto; max-height: 50vh;" class="m-1"></div>
+            <input id="note-search" class="form-control m-1 hidden" placeholder="Search">
+            <button class="btn btn-secondary" id="add-note-button">Add item</button>
 
         </div>
 
@@ -147,18 +152,14 @@
 
         <div class="col-xl-3" style="text-align: center">
 
-            <div id="weapon-container">
-                <table id="weapon-table" class="table"></table>
-            </div>
+            <div id="weapon-container" style="overflow-y: auto; max-height: 80vh;"></div>
             <input id="weapon-search" class="form-control m-1 hidden" placeholder="Search">
             <button class="btn btn-secondary" id="add-weapon-button">Add weapon</button>
         </div>
 
         <div class="col-xl-2" style="text-align: center">
 
-            <div id="inventory-container" style="overflow-y: auto; max-height: 80vh;">
-
-            </div>
+            <div id="inventory-container" style="overflow-y: auto; max-height: 80vh;"></div>
             <input id="inventory-search" class="form-control m-1 hidden" placeholder="Search">
             <button class="btn btn-secondary" id="add-item-button">Add item</button>
 
@@ -611,6 +612,39 @@
 
                         <button id="create-new-status" class="btn btn-success mt-2" type="button">Add status</button>
                         <button id="delete-status" class="btn btn-danger mt-2" type="button">Remove status</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for creating and editing notes -->
+    <div class="modal fade" id="note-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title"></h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body" style="text-align: center;">
+                    <div class="alert-container"></div>
+
+                    <form id="note-form">
+                        <div class="input-group">
+                            <div class="input-group-prepend"><span class="input-group-text">Title</span></div>
+                            <input class="form-control" name="title" placeholder="Title">
+                        </div>
+
+                        <textarea class="form-control" name="text" placeholder="Text" rows="10"></textarea>
+
+                        <input class="hidden" name="oldTitle">
+
+                        <button id="create-new-note" class="btn btn-success mt-2" type="button">Add note</button>
+                        <button id="delete-note" class="btn btn-danger mt-2" type="button">Remove note</button>
                     </form>
                 </div>
             </div>

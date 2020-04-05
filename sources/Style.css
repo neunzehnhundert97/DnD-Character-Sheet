@@ -88,6 +88,12 @@ input, select {
     animation-fill-mode: forwards;
 }
 
+#note-table tr:not(:first-child):hover {
+    animation-name: greenish;
+    animation-duration: 0.5s;
+    animation-fill-mode: forwards;
+}
+
 .proficient-with {
     font-weight: 600;
 }

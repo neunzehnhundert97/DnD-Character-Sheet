@@ -12,6 +12,7 @@ object AbilityController
     var sortByName: Boolean = true
     var sortAsc: Boolean = true
 
+    /** Registers event handlers regarding abilities. */
     def readyAbilities(): Unit =
     {
         jQ("#ability-search").on(EventName.keyUp, abilitySearch).value("")
@@ -68,7 +69,7 @@ object AbilityController
             // Add event handlers
             .find("tr:not(:first-child)").on(EventName.click, abilityHandler)
 
-        // Add event handler for sorting
+        // Add event handlers for sorting
         jQ("#ability-table th:eq(0)").on(EventName.click, (_, _) =>
         {
             if (sortByName)

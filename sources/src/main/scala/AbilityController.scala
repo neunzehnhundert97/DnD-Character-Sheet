@@ -9,7 +9,8 @@ import JQBootstrapped.jq2modalized
 object AbilityController
 {
     // Variables for sorting directions
-    var abilitySortbyName: Boolean = true
+    var sortByName: Boolean = true
+    var sortAsc: Boolean = true
 
     def readyAbilities(): Unit =
     {
@@ -19,6 +20,7 @@ object AbilityController
     /** Updates the list of abilities. */
     def updateAbilities(): Unit =
     {
+        // Prepare data
         val data = Mappings.abilities.toList.map(t =>
         {
             val key = t._1
@@ -34,14 +36,29 @@ object AbilityController
                 (key, statToModifier(info.score(value)), false, false)
         })
 
+        val sortedData = if (sortByName)
+        {
+            if (sortAsc)
+                data.sortBy(_._1)
+            else
+                data.sortBy(_._1).reverse
+        }
+        else
+        {
+            if (sortAsc)
+                data.sortBy(_._2)
+            else
+                data.sortBy(_._2).reverse
+        }
+
         // Generate html
         jQ("#ability-container").html(
             table(id := "ability-table", cls := "table")(
                 tr(
-                    th(s"${if (abilitySortbyName) "⮚" else ""}Ability"),
-                    th(s"${if (!abilitySortbyName) "⮚" else ""}Mod")
+                    th(s"${showSortingIndicator(true)}Ability"),
+                    th(s"${showSortingIndicator(false)}Mod")
                 ),
-                for ((key, mod, prof, exp) <- if (abilitySortbyName) data.sortBy(_._1) else data.sortBy(_._2).reverse)
+                for ((key, mod, prof, exp) <- sortedData)
                     yield tr(
                         td(cls := (if (prof) if (exp) "expert-with" else "proficient-with" else ""))(key),
                         td(mod)
@@ -54,12 +71,24 @@ object AbilityController
         // Add event handler for sorting
         jQ("#ability-table th:eq(0)").on(EventName.click, (_, _) =>
         {
-            abilitySortbyName = true
+            if (sortByName)
+                sortAsc = !sortAsc
+            else
+            {
+                sortByName = true
+                sortAsc = true
+            }
             updateAbilities()
         })
         jQ("#ability-table th:eq(1)").on(EventName.click, (_, _) =>
         {
-            abilitySortbyName = false
+            if (!sortByName)
+                sortAsc = !sortAsc
+            else
+            {
+                sortByName = false
+                sortAsc = true
+            }
             updateAbilities()
         })
     }
@@ -149,4 +178,14 @@ object AbilityController
         // Open modal
         modal.modal("show")
     }
+
+    /** Displays the sorting arrow. */
+    private def showSortingIndicator(isName: Boolean): String =
+        if (isName == sortByName)
+            if (sortAsc)
+                "⮙"
+            else
+                "⮛"
+        else
+            ""
 }

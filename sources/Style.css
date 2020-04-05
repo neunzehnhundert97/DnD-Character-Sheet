@@ -72,7 +72,7 @@ input, select {
     animation-fill-mode: forwards;
 }
 
-#inventory-table tr:not(:first-child):hover {
+#inventory-table tr:not(:first-child):not(:last-child):hover {
     animation-name: greenish;
     animation-duration: 0.5s;
     animation-fill-mode: forwards;

@@ -12,59 +12,125 @@ import scala.Ordering.Double.TotalOrdering
 object InventoryController
 {
 
-    var inventorySortByColumn: Int = 0
+    // Sorting information
+    var sortByColumn: Int = 0
+    var sortAsc: Boolean = true
 
-    /** */
+    // Hidden columns
+    var hidePrice: Boolean = false
+    var hideWeight: Boolean = false
+
+    /** Binds handlers for everything inventory related. */
     def readyInventory(): Unit =
     {
+        // Register button handlers
         jQ("#add-item-button").on(EventName.click, openNewItemModal)
-        jQ("#create-new-item").on(EventName.click, createupdateItem)
+        jQ("#create-new-item").on(EventName.click, createUpdateItem)
         jQ("#delete-item").on(EventName.click, removeItem)
-        
+
+        // Register handler on search bar
         jQ("#inventory-search").on(EventName.keyUp, inventorySearch).value("")
     }
 
-    /** */
+    /** Renders the inventory table. */
     def updateInventory(): Unit =
     {
-        val inventory = (inventorySortByColumn match
+        // Sort items
+        val inventory = (sortByColumn match
         {
-            case 1 => info.inventory.sortBy(i => i.price * Mappings.currencies(i.priceUnit)).reverse
-            case 2 => info.inventory.sortBy(_.weight).reverse
-            case _ => info.inventory.sortBy(_.name)
+            case 0 if sortAsc => info.inventory.sortBy(_.name)
+            case 0 if !sortAsc => info.inventory.sortBy(_.name).reverse
+            case 1 if sortAsc => info.inventory.sortBy(i => i.price * Mappings.currencies(i.priceUnit))
+            case 1 if !sortAsc => info.inventory.sortBy(i => i.price * Mappings.currencies(i.priceUnit)).reverse
+            case 2 if sortAsc => info.inventory.sortBy(_.weight).reverse
+            case 2 if !sortAsc => info.inventory.sortBy(_.weight)
         }).toList
 
         // Generate table
         jQ("#inventory-container").html(
             table(id := "inventory-table", cls := "table")(
                 tr(
-                    th(s"${if (inventorySortByColumn == 0) "⮚" else ""}Item"),
-                    th(s"${if (inventorySortByColumn == 1) "⮚" else ""}Price"),
-                    th(s"${if (inventorySortByColumn == 2) "⮚" else ""}Weight")
+                    th(s"${showSortingIndicator(0)}Item"),
+                    th(if (hidePrice) cls := "hidden" else ())(s"${showSortingIndicator(1)}Price"),
+                    th(if (hideWeight) cls := "hidden" else ())(s"${showSortingIndicator(2)}Weight")
                 ),
                 for ((item, index) <- inventory.zipWithIndex)
                     yield tr(data.index := index, data.hash := item.##)(
                         td(s"${item.amount} ${item.name}"),
-                        td(if (item.price != 0) s"${item.amount.toIntOption.getOrElse(1) * item.price} ${item.priceUnit}" else "-"),
-                        td(if (item.weight != 0) item.amount.toIntOption.getOrElse(1) * item.weight else "-")
+                        td(if (hidePrice) cls := "hidden" else ())(if (item.price != 0) s"${item.amount.toIntOption.getOrElse(1) * item.price} ${item.priceUnit}" else "-"),
+                        td(if (hideWeight) cls := "hidden" else ())(if (item.weight != 0) item.amount.toIntOption.getOrElse(1) * item.weight else "-")
                     ),
+                if (inventory.nonEmpty)
+                    tr(th("Total"), th(if (hidePrice) cls := "hidden" else ())(0), th(if (hideWeight) cls := "hidden" else ())(0))
+                else (),
             ).render
-        ).find("tr:not(:first-child)").on(EventName.click, modifyItem)
+        ).find("tr:not(:first-child):not(:last-child)").on(EventName.click, modifyItem)
 
-        // Add event handler for sorting
+        // Add event handlers for sorting
         jQ("#inventory-table th:eq(0)").on(EventName.click, (_, _) =>
         {
-            inventorySortByColumn = 0
+            // Sets this column as sorting criterion or swaps the direction
+            if (sortByColumn == 0)
+                sortAsc = !sortAsc
+            else
+            {
+                sortByColumn = 0
+                sortAsc = true
+            }
+
+            updateInventory()
+        }).on(EventName.contextMenu, (_, ev) =>
+        {
+            // Prevent context menu
+            ev.preventDefault()
+
+            // Unhide all columns
+            hidePrice = false
+            hideWeight = false
             updateInventory()
         })
+
         jQ("#inventory-table th:eq(1)").on(EventName.click, (_, _) =>
         {
-            inventorySortByColumn = 1
+            // Sets this column as sorting criterion or swaps the direction
+            if (sortByColumn == 1)
+                sortAsc = !sortAsc
+            else
+            {
+                sortByColumn = 1
+                sortAsc = true
+            }
+
+            updateInventory()
+        }).on(EventName.contextMenu, (_, ev) =>
+        {
+            // Prevent context menu
+            ev.preventDefault()
+
+            // Set the price to be hidden
+            hidePrice = true
             updateInventory()
         })
+
         jQ("#inventory-table th:eq(2)").on(EventName.click, (_, _) =>
         {
-            inventorySortByColumn = 2
+            // Sets this column as sorting criterion or swaps the direction
+            if (sortByColumn == 2)
+                sortAsc = !sortAsc
+            else
+            {
+                sortByColumn = 2
+                sortAsc = true
+            }
+
+            updateInventory()
+        }).on(EventName.contextMenu, (_, ev) =>
+        {
+            // Prevent context menu
+            ev.preventDefault()
+
+            // Set the price to be hidden
+            hideWeight = true
             updateInventory()
         })
 
@@ -92,8 +158,8 @@ object InventoryController
         }
     }
 
-    /** */
-    private def createupdateItem(elem: Element, event: JQueryEvent): Unit =
+    /** Creates a new item or updates the values of an existing one. */
+    private def createUpdateItem(elem: Element, event: JQueryEvent): Unit =
     {
         val formData = new FormData(document.getElementById("item-form").asInstanceOf[HTMLFormElement])
         val name = formData.get("name")
@@ -116,7 +182,7 @@ object InventoryController
         updateInventory()
     }
 
-    /** */
+    /** Opens the item modal and inserts the selected weapons values. */
     private def modifyItem(elem: Element, event: JQueryEvent): Unit =
     {
         val hash = jQ(elem).attr("data-hash").flatMap(_.toIntOption).get
@@ -144,7 +210,7 @@ object InventoryController
         updateInventory()
     }
 
-    /** */
+    /** Opens the modal for new items and clear all inputs. */
     private def openNewItemModal(elem: Element, event: JQueryEvent): Unit =
     {
         jQ("#item-modal .modal-title").text("New item")
@@ -154,4 +220,14 @@ object InventoryController
         jQ("#item-modal .alert").remove()
         jQ("#item-modal").modal("show")
     }
+
+    /** Displays the sorting arrow. */
+    private def showSortingIndicator(column: Int): String =
+        if (column == sortByColumn)
+            if (sortAsc)
+                "⮙"
+            else
+                "⮛"
+        else
+            ""
 }

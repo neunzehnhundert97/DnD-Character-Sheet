@@ -4,6 +4,7 @@ import io.udash.wrappers.jquery.{EventName, JQueryEvent, jQ}
 import org.scalajs.dom.Element
 import scalatags.JsDom.all._
 import JQBootstrapped.jq2modalized
+import Extension.ExtendedWeapon
 
 object WeaponController
 {
